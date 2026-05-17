@@ -14,7 +14,7 @@ class ApiApplicationTests {
 
 	@Test
 	void given2Plus2ShouldReturn4() {
-		assertEquals(4, 2+3);
+		assertEquals(4, 2+2);
 	}
 
 }
