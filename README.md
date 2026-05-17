@@ -11,7 +11,7 @@ Aluggy is a web platform focused on university students looking for housing clos
 - **Language:** Java 25
 - **Framework:** Spring Boot 4
 - **Security:** Spring Security + JWT
-- **Database:** PostgreSQL (production) / H2 (development)
+- **Database:** PostgreSQL (dev/prod) and H2 (test)
 - **ORM:** Spring Data JPA + Hibernate
 - **Migrations:** Flyway
 - **Build tool:** Maven
