@@ -21,6 +21,8 @@ import java.util.UUID;
 @AllArgsConstructor
 @Entity
 @Table(name= "users")
+@SQLDelete(sql = "UPDATE users SET deleted_at = NOW() WHERE id = ?")
+@SQLRestriction(value = "deleted_at IS NULL")
 public class User {
 
     @Id
