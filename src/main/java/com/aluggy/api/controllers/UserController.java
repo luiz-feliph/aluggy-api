@@ -2,7 +2,7 @@ package com.aluggy.api.controllers;
 
 import com.aluggy.api.entities.User;
 import com.aluggy.api.services.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -14,10 +14,10 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping(value = "/users")
+@RequiredArgsConstructor
 public class UserController {
 
-    @Autowired
-    UserService service;
+    private final UserService service;
 
     @GetMapping
     public ResponseEntity<List<User>> findAll() {

@@ -2,7 +2,7 @@ package com.aluggy.api.services;
 
 import com.aluggy.api.entities.User;
 import com.aluggy.api.repositories.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,10 +10,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
-    @Autowired
-    private UserRepository repository;
+    private final UserRepository repository;
 
     public List<User> findAll() {
         return repository.findAll();
@@ -30,4 +30,6 @@ public class UserService {
     public void delete(UUID id) {
         repository.deleteById(id);
     }
+
+
 }
