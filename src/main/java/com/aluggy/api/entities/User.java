@@ -55,6 +55,14 @@ public class User implements UserDetails {
     @JoinColumn(name = "profile_photo_id", referencedColumnName = "id")
     ProfilePhoto profilePhoto;
 
+    public User(String userName, String fullName, String emailAddress, String password, Role role) {
+        this.userName = userName;
+        this.fullName = fullName;
+        this.emailAddress = emailAddress;
+        this.password = password;
+        this.role = role;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if (this.role == Role.ADMIN) return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ROLE_USER"));
