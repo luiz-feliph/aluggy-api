@@ -33,7 +33,7 @@ public class AuthenticationController {
     @PostMapping("/login")
     public ResponseEntity login(@RequestBody @Valid LoginRequestDTO data) {
         var usernamePassword = new UsernamePasswordAuthenticationToken(data.login(), data.password());
-        var auth = this.authenticationManager.authenticate(usernamePassword);
+        var auth = authenticationManager.authenticate(usernamePassword);
 
         return ResponseEntity.ok().build();
     }
@@ -46,7 +46,7 @@ public class AuthenticationController {
         if (service.existsByEmailAddress(data.emailAddress())) return ResponseEntity.badRequest().build();
 
         String encryptedPassword = passwordEncoder.encode(data.password());
-        User newUser = new User(data.userName(), data.fullName(), data.emailAddress(), encryptedPassword, Role.USER);
+        User newUser = new User(data.userName(), data.fullName(), data.emailAddress(), data.contactNumber(), encryptedPassword, Role.USER);
 
 
         newUser = service.insert(newUser);
@@ -61,7 +61,8 @@ public class AuthenticationController {
                 newUser.getId(),
                 newUser.getUsername(),
                 newUser.getFullName(),
-                newUser.getEmailAddress()
+                newUser.getEmailAddress(),
+                newUser.getContactNumber()
         );
 
         return ResponseEntity.created(uri).body(response);

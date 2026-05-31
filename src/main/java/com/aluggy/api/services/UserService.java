@@ -24,10 +24,10 @@ public class UserService {
     }
 
     public boolean existsByUserName(String username) {
-        return repository.existsByUsername(username);
+        return repository.existsByUserName(username);
     }
     public boolean existsByEmailAddress(String emailAddress) {
-        return repository.existsByEmail(emailAddress);
+        return repository.existsByEmailAddress(emailAddress);
     }
 
     public User insert(User user) {
