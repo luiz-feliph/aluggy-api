@@ -1,10 +1,12 @@
 package com.aluggy.api.controllers;
 
 import com.aluggy.api.dto.LoginRequestDTO;
+import com.aluggy.api.dto.LoginResponseDTO;
 import com.aluggy.api.dto.RegisterRequestDTO;
 import com.aluggy.api.dto.UserResponseDTO;
 import com.aluggy.api.entities.User;
 import com.aluggy.api.entities.enums.Role;
+import com.aluggy.api.services.TokenService;
 import com.aluggy.api.services.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,13 +31,16 @@ public class AuthenticationController {
     private final AuthenticationManager authenticationManager;
     private final UserService service;
     private final PasswordEncoder passwordEncoder;
+    private final TokenService tokenService;
 
     @PostMapping("/login")
     public ResponseEntity login(@RequestBody @Valid LoginRequestDTO data) {
         var usernamePassword = new UsernamePasswordAuthenticationToken(data.login(), data.password());
         var auth = authenticationManager.authenticate(usernamePassword);
 
-        return ResponseEntity.ok().build();
+        var token = tokenService.generateToken((User) auth.getPrincipal());
+
+        return ResponseEntity.ok(new LoginResponseDTO(token));
     }
 
     @PostMapping("/register")
