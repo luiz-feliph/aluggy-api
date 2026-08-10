@@ -2,6 +2,8 @@ package com.aluggy.api.controllers;
 
 import com.aluggy.api.entities.User;
 import com.aluggy.api.entities.enums.Role;
+import com.aluggy.api.exceptions.UserAlreadyExistsException;
+import com.aluggy.api.exceptions.UserNotFoundException;
 import com.aluggy.api.infra.security.SecurityConfigurations;
 import com.aluggy.api.repositories.UserRepository;
 import com.aluggy.api.services.TokenService;
@@ -80,7 +82,7 @@ class UserControllerTest {
 
     @Test
     void findById_existingUser_returns200() throws Exception {
-        when(userService.findById(testUserId)).thenReturn(Optional.of(testUser));
+        when(userService.findById(testUserId)).thenReturn(testUser);
 
         mockMvc.perform(get("/users/{id}", testUserId)
                         .header("Authorization", "Bearer valid-token"))
@@ -91,7 +93,8 @@ class UserControllerTest {
     @Test
     void findById_nonExistentUser_returns404() throws Exception {
         UUID nonExistentId = UUID.randomUUID();
-        when(userService.findById(nonExistentId)).thenReturn(Optional.empty());
+        when(userService.findById(nonExistentId))
+                .thenThrow(new UserNotFoundException("Usuário não encontrado"));
 
         mockMvc.perform(get("/users/{id}", nonExistentId)
                         .header("Authorization", "Bearer valid-token"))
@@ -114,6 +117,18 @@ class UserControllerTest {
     }
 
     @Test
+    void insert_duplicateUsername_returns409() throws Exception {
+        when(userService.insert(any(User.class)))
+                .thenThrow(new UserAlreadyExistsException("Username já cadastrado"));
+
+        mockMvc.perform(post("/users")
+                        .header("Authorization", "Bearer valid-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"userName\":\"janedoe\",\"fullName\":\"Jane Doe\",\"emailAddress\":\"jane@email.com\",\"contactNumber\":\"0987654321\",\"password\":\"password\"}"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
     void delete_existingUser_returns204() throws Exception {
         mockMvc.perform(delete("/users/{id}", testUserId)
                         .header("Authorization", "Bearer valid-token"))
@@ -123,93 +138,68 @@ class UserControllerTest {
     }
 
     @Test
-    void unauthenticated_accessReturns401Or403() throws Exception {
+    void delete_nonExistentUser_returns404() throws Exception {
+        doThrow(new UserNotFoundException("Usuário não encontrado"))
+                .when(userService).delete(testUserId);
+
+        mockMvc.perform(delete("/users/{id}", testUserId)
+                        .header("Authorization", "Bearer valid-token"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void unauthenticated_accessReturns401() throws Exception {
         when(tokenService.validateToken(anyString())).thenReturn("");
 
         mockMvc.perform(get("/users"))
-                .andExpect(result -> {
-                    int status = result.getResponse().getStatus();
-                    if (status != 401 && status != 403) {
-                        throw new AssertionError("Expected 401 or 403 but got " + status);
-                    }
-                });
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void unauthenticated_noTokenHeader_returns401Or403() throws Exception {
+    void unauthenticated_noTokenHeader_returns401() throws Exception {
         mockMvc.perform(get("/users"))
-                .andExpect(result -> {
-                    int status = result.getResponse().getStatus();
-                    if (status != 401 && status != 403) {
-                        throw new AssertionError("Expected 401 or 403 but got " + status);
-                    }
-                });
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void unauthenticated_findById_returns401Or403() throws Exception {
+    void unauthenticated_findById_returns401() throws Exception {
         mockMvc.perform(get("/users/{id}", UUID.randomUUID()))
-                .andExpect(result -> {
-                    int status = result.getResponse().getStatus();
-                    if (status != 401 && status != 403) {
-                        throw new AssertionError("Expected 401 or 403 but got " + status);
-                    }
-                });
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void unauthenticated_delete_returns401Or403() throws Exception {
+    void unauthenticated_delete_returns401() throws Exception {
         mockMvc.perform(delete("/users/{id}", UUID.randomUUID()))
-                .andExpect(result -> {
-                    int status = result.getResponse().getStatus();
-                    if (status != 401 && status != 403) {
-                        throw new AssertionError("Expected 401 or 403 but got " + status);
-                    }
-                });
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void unauthenticated_insert_returns401Or403() throws Exception {
+    void unauthenticated_insert_returns401() throws Exception {
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"userName\":\"test\"}"))
-                .andExpect(result -> {
-                    int status = result.getResponse().getStatus();
-                    if (status != 401 && status != 403) {
-                        throw new AssertionError("Expected 401 or 403 but got " + status);
-                    }
-                });
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void tokenValidButUserDeleted_noAuthentication_noAccess() throws Exception {
+    void tokenValidButUserDeleted_returns401() throws Exception {
         when(tokenService.validateToken(anyString())).thenReturn("deleteduser");
         when(userRepository.findByUserNameOrEmailAddress("deleteduser", "deleteduser"))
                 .thenReturn(Optional.empty());
 
         mockMvc.perform(get("/users")
                         .header("Authorization", "Bearer valid-token"))
-                .andExpect(result -> {
-                    int status = result.getResponse().getStatus();
-                    if (status != 401 && status != 403) {
-                        throw new AssertionError("Expected 401 or 403 when deleted user token is used, but got " + status);
-                    }
-                });
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void tokenValidButUserDeleted_findById_noAccess() throws Exception {
+    void tokenValidButUserDeleted_findById_returns401() throws Exception {
         when(tokenService.validateToken(anyString())).thenReturn("deleteduser");
         when(userRepository.findByUserNameOrEmailAddress("deleteduser", "deleteduser"))
                 .thenReturn(Optional.empty());
 
         mockMvc.perform(get("/users/{id}", UUID.randomUUID())
                         .header("Authorization", "Bearer valid-token"))
-                .andExpect(result -> {
-                    int status = result.getResponse().getStatus();
-                    if (status != 401 && status != 403) {
-                        throw new AssertionError("Expected 401 or 403 when deleted user token is used, but got " + status);
-                    }
-                });
+                .andExpect(status().isUnauthorized());
     }
 }

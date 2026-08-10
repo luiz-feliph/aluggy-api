@@ -81,7 +81,7 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    void login_wrongPassword_returns500_not401() throws Exception {
+    void login_wrongPassword_returns401() throws Exception {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(new BadCredentialsException("Invalid credentials"));
 
@@ -89,34 +89,34 @@ class AuthenticationControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"login\":\"johndoe\"," +
                                 "\"password\":\"wrongpassword\"}"))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void login_nonExistentUser_returns500_not401() throws Exception {
+    void login_nonExistentUser_returns401() throws Exception {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(new BadCredentialsException("Invalid credentials"));
 
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"login\":\"nonexistent\",\"password\":\"password123\"}"))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void login_nullLoginField_returns500_not400() throws Exception {
+    void login_nullLoginField_returns400() throws Exception {
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"password\":\"password123\"}"))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
-    void login_nullPasswordField_returns500_not400() throws Exception {
+    void login_nullPasswordField_returns400() throws Exception {
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"login\":\"johndoe\"}"))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -173,77 +173,53 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    void register_duplicateUsername_returns400() throws Exception {
+    void register_duplicateUsername_returns409() throws Exception {
         when(userService.existsByUserName("johndoe")).thenReturn(true);
 
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"userName\":\"johndoe\",\"fullName\":\"John Doe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"1234567890\",\"password\":\"password123\"}"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isConflict());
 
         verify(userService, never()).insert(any());
         verify(passwordEncoder, never()).encode(anyString());
     }
 
     @Test
-    void register_duplicateEmail_returns400() throws Exception {
+    void register_duplicateEmail_returns409() throws Exception {
         when(userService.existsByUserName("johndoe")).thenReturn(false);
         when(userService.existsByEmailAddress("john@email.com")).thenReturn(true);
 
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"userName\":\"johndoe\",\"fullName\":\"John Doe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"1234567890\",\"password\":\"password123\"}"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isConflict());
 
         verify(userService, never()).insert(any());
     }
 
     @Test
-    void register_missingFullName_stillAccepted() throws Exception {
-        when(userService.existsByUserName("johndoe")).thenReturn(false);
-        when(userService.existsByEmailAddress("john@email.com")).thenReturn(false);
-        when(passwordEncoder.encode("password123")).thenReturn("encoded-password");
-
-        User savedUser = new User("johndoe", null, "john@email.com", "1234567890", "encoded-password", Role.USER);
-        savedUser.setId(UUID.randomUUID());
-        when(userService.insert(any(User.class))).thenReturn(savedUser);
-
+    void register_missingFullName_returns400() throws Exception {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"userName\":\"johndoe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"1234567890\",\"password\":\"password123\"}"))
-                .andExpect(status().isCreated());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
-    void register_missingContactNumber_stillAccepted() throws Exception {
-        when(userService.existsByUserName("johndoe")).thenReturn(false);
-        when(userService.existsByEmailAddress("john@email.com")).thenReturn(false);
-        when(passwordEncoder.encode("password123")).thenReturn("encoded-password");
-
-        User savedUser = new User("johndoe", "John Doe", "john@email.com", null, "encoded-password", Role.USER);
-        savedUser.setId(UUID.randomUUID());
-        when(userService.insert(any(User.class))).thenReturn(savedUser);
-
+    void register_missingContactNumber_returns400() throws Exception {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"userName\":\"johndoe\",\"fullName\":\"John Doe\",\"emailAddress\":\"john@email.com\",\"password\":\"password123\"}"))
-                .andExpect(status().isCreated());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
-    void register_emptyUserName_stillAccepted() throws Exception {
-        when(userService.existsByUserName("")).thenReturn(false);
-        when(userService.existsByEmailAddress("john@email.com")).thenReturn(false);
-        when(passwordEncoder.encode("password123")).thenReturn("encoded-password");
-
-        User savedUser = new User("", "John Doe", "john@email.com", "1234567890", "encoded-password", Role.USER);
-        savedUser.setId(UUID.randomUUID());
-        when(userService.insert(any(User.class))).thenReturn(savedUser);
-
+    void register_emptyUserName_returns400() throws Exception {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"userName\":\"\",\"fullName\":\"John Doe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"1234567890\",\"password\":\"password123\"}"))
-                .andExpect(status().isCreated());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -265,11 +241,11 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    void register_emptyBody_returns500_not400() throws Exception {
+    void register_emptyBody_returns400() throws Exception {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -281,34 +257,18 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    void register_emptyPassword_stillAccepted() throws Exception {
-        when(userService.existsByUserName("johndoe")).thenReturn(false);
-        when(userService.existsByEmailAddress("john@email.com")).thenReturn(false);
-        when(passwordEncoder.encode("")).thenReturn("encoded-empty");
-
-        User savedUser = new User("johndoe", "John Doe", "john@email.com", "1234567890", "encoded-empty", Role.USER);
-        savedUser.setId(UUID.randomUUID());
-        when(userService.insert(any(User.class))).thenReturn(savedUser);
-
+    void register_emptyPassword_returns400() throws Exception {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"userName\":\"johndoe\",\"fullName\":\"John Doe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"1234567890\",\"password\":\"\"}"))
-                .andExpect(status().isCreated());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
-    void register_invalidEmailFormat_stillAccepted() throws Exception {
-        when(userService.existsByUserName("johndoe")).thenReturn(false);
-        when(userService.existsByEmailAddress("not-an-email")).thenReturn(false);
-        when(passwordEncoder.encode("password123")).thenReturn("encoded-password");
-
-        User savedUser = new User("johndoe", "John Doe", "not-an-email", "1234567890", "encoded-password", Role.USER);
-        savedUser.setId(UUID.randomUUID());
-        when(userService.insert(any(User.class))).thenReturn(savedUser);
-
+    void register_invalidEmailFormat_returns400() throws Exception {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"userName\":\"johndoe\",\"fullName\":\"John Doe\",\"emailAddress\":\"not-an-email\",\"contactNumber\":\"1234567890\",\"password\":\"password123\"}"))
-                .andExpect(status().isCreated());
+                .andExpect(status().isBadRequest());
     }
 }

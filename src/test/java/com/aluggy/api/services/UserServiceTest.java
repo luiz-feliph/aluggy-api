@@ -2,6 +2,7 @@ package com.aluggy.api.services;
 
 import com.aluggy.api.entities.User;
 import com.aluggy.api.entities.enums.Role;
+import com.aluggy.api.exceptions.UserNotFoundException;
 import com.aluggy.api.repositories.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -58,21 +59,18 @@ class UserServiceTest {
         User user = createTestUser();
         when(repository.findById(id)).thenReturn(Optional.of(user));
 
-        Optional<User> result = service.findById(id);
+        User result = service.findById(id);
 
-        assertTrue(result.isPresent());
-        assertEquals(user, result.get());
+        assertEquals(user, result);
         verify(repository).findById(id);
     }
 
     @Test
-    void findById_nonExistingUser_returnsEmpty() {
+    void findById_nonExistingUser_throwsUserNotFoundException() {
         UUID id = UUID.randomUUID();
         when(repository.findById(id)).thenReturn(Optional.empty());
 
-        Optional<User> result = service.findById(id);
-
-        assertTrue(result.isEmpty());
+        assertThrows(UserNotFoundException.class, () -> service.findById(id));
         verify(repository).findById(id);
     }
 
@@ -92,10 +90,20 @@ class UserServiceTest {
     @Test
     void delete_callsRepositoryDeleteById() {
         UUID id = UUID.randomUUID();
+        when(repository.existsById(id)).thenReturn(true);
 
         service.delete(id);
 
         verify(repository).deleteById(id);
+    }
+
+    @Test
+    void delete_nonExistentUser_throwsUserNotFoundException() {
+        UUID id = UUID.randomUUID();
+        when(repository.existsById(id)).thenReturn(false);
+
+        assertThrows(UserNotFoundException.class, () -> service.delete(id));
+        verify(repository, never()).deleteById(any());
     }
 
     @Test
