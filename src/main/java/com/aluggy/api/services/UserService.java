@@ -31,6 +31,7 @@ public class UserService {
     public boolean existsByUserName(String username) {
         return repository.existsByUserName(username);
     }
+
     public boolean existsByEmailAddress(String emailAddress) {
         return repository.existsByEmailAddress(emailAddress);
     }
@@ -48,6 +49,8 @@ public class UserService {
     }
 
     public void delete(UUID id) {
+        if(!repository.existsById(id)) throw new UserNotFoundException("User with id " + id + " does not exist");
+
         repository.deleteById(id);
     }
 

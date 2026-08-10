@@ -2,6 +2,7 @@ package com.aluggy.api.controllers;
 
 import com.aluggy.api.entities.User;
 import com.aluggy.api.entities.enums.Role;
+import com.aluggy.api.exceptions.UserAlreadyExistsException;
 import com.aluggy.api.repositories.UserRepository;
 import com.aluggy.api.services.TokenService;
 import com.aluggy.api.services.UserService;
@@ -20,7 +21,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -137,8 +137,6 @@ class AuthenticationControllerTest {
 
     @Test
     void register_validData_returns201WithUserResponse() throws Exception {
-        when(userService.existsByUserName("johndoe")).thenReturn(false);
-        when(userService.existsByEmailAddress("john@email.com")).thenReturn(false);
         when(passwordEncoder.encode("password123")).thenReturn("encoded-password");
 
         User savedUser = createTestUser();
@@ -157,8 +155,6 @@ class AuthenticationControllerTest {
 
     @Test
     void register_validData_createsUserWithRoleUSER() throws Exception {
-        when(userService.existsByUserName("johndoe")).thenReturn(false);
-        when(userService.existsByEmailAddress("john@email.com")).thenReturn(false);
         when(passwordEncoder.encode("password123")).thenReturn("encoded-password");
 
         User savedUser = createTestUser();
@@ -173,29 +169,17 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    void register_duplicateUsername_returns409() throws Exception {
-        when(userService.existsByUserName("johndoe")).thenReturn(true);
+    void register_duplicateUser_returns409() throws Exception {
+        when(passwordEncoder.encode("password123")).thenReturn("encoded-password");
+        when(userService.insert(any(User.class)))
+                .thenThrow(new UserAlreadyExistsException("User already exists"));
 
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"userName\":\"johndoe\",\"fullName\":\"John Doe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"1234567890\",\"password\":\"password123\"}"))
                 .andExpect(status().isConflict());
 
-        verify(userService, never()).insert(any());
-        verify(passwordEncoder, never()).encode(anyString());
-    }
-
-    @Test
-    void register_duplicateEmail_returns409() throws Exception {
-        when(userService.existsByUserName("johndoe")).thenReturn(false);
-        when(userService.existsByEmailAddress("john@email.com")).thenReturn(true);
-
-        mockMvc.perform(post("/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userName\":\"johndoe\",\"fullName\":\"John Doe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"1234567890\",\"password\":\"password123\"}"))
-                .andExpect(status().isConflict());
-
-        verify(userService, never()).insert(any());
+        verify(userService).insert(any(User.class));
     }
 
     @Test
@@ -224,8 +208,6 @@ class AuthenticationControllerTest {
 
     @Test
     void register_roleFieldIsIgnored_alwaysCreatesAsUSER() throws Exception {
-        when(userService.existsByUserName("adminuser")).thenReturn(false);
-        when(userService.existsByEmailAddress("admin@email.com")).thenReturn(false);
         when(passwordEncoder.encode("password123")).thenReturn("encoded-password");
 
         User savedUser = new User("adminuser", "Admin User", "admin@email.com", "1234567890", "encoded-password", Role.USER);

@@ -2,6 +2,7 @@ package com.aluggy.api.services;
 
 import com.aluggy.api.entities.User;
 import com.aluggy.api.entities.enums.Role;
+import com.aluggy.api.exceptions.UserAlreadyExistsException;
 import com.aluggy.api.exceptions.UserNotFoundException;
 import com.aluggy.api.repositories.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -85,6 +86,25 @@ class UserServiceTest {
 
         assertEquals(savedUser, result);
         verify(repository).save(user);
+    }
+
+    @Test
+    void insert_duplicateUsername_throwsUserAlreadyExistsException() {
+        User user = createTestUser();
+        when(repository.existsByUserName("johndoe")).thenReturn(true);
+
+        assertThrows(UserAlreadyExistsException.class, () -> service.insert(user));
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void insert_duplicateEmail_throwsUserAlreadyExistsException() {
+        User user = createTestUser();
+        when(repository.existsByUserName("johndoe")).thenReturn(false);
+        when(repository.existsByEmailAddress("john@email.com")).thenReturn(true);
+
+        assertThrows(UserAlreadyExistsException.class, () -> service.insert(user));
+        verify(repository, never()).save(any());
     }
 
     @Test
