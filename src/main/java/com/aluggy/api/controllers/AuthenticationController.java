@@ -46,13 +46,9 @@ public class AuthenticationController {
     @PostMapping("/register")
     public ResponseEntity<UserResponseDTO> register(@RequestBody @Valid RegisterRequestDTO data) {
 
-        if (service.existsByUserName(data.userName())) return ResponseEntity.badRequest().build();
-
-        if (service.existsByEmailAddress(data.emailAddress())) return ResponseEntity.badRequest().build();
-
         String encryptedPassword = passwordEncoder.encode(data.password());
-        User newUser = new User(data.userName(), data.fullName(), data.emailAddress(), data.contactNumber(), encryptedPassword, Role.USER);
 
+        User newUser = new User(data.userName(), data.fullName(), data.emailAddress(), data.contactNumber(), encryptedPassword, Role.USER);
 
         newUser = service.insert(newUser);
 

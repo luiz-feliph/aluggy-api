@@ -1,6 +1,7 @@
 package com.aluggy.api.services;
 
 import com.aluggy.api.entities.User;
+import com.aluggy.api.exceptions.UserAlreadyExistsException;
 import com.aluggy.api.exceptions.UserNotFoundException;
 import com.aluggy.api.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,14 @@ public class UserService {
     }
 
     public User insert(User user) {
+        if (existsByUserName(user.getUsername())) {
+            throw new UserAlreadyExistsException("User with username " + user.getUsername() + " already exists");
+        }
+
+        if (existsByEmailAddress(user.getEmailAddress())) {
+            throw new UserAlreadyExistsException("User with email " + user.getEmailAddress() + " already exists");
+        }
+
         return repository.save(user);
     }
 
