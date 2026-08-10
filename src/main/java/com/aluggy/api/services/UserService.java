@@ -1,6 +1,7 @@
 package com.aluggy.api.services;
 
 import com.aluggy.api.entities.User;
+import com.aluggy.api.exceptions.UserNotFoundException;
 import com.aluggy.api.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,8 +20,11 @@ public class UserService {
         return repository.findAll();
     }
 
-    public Optional<User> findById(UUID id) {
-        return repository.findById(id);
+    public User findById(UUID id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(
+                        "User with id " + id + " not found"
+                ));
     }
 
     public boolean existsByUserName(String username) {

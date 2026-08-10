@@ -26,14 +26,10 @@ public class UserController {
     }
 
     @GetMapping(value = "/{id}")
-    public ResponseEntity<Optional<User>> findById(@PathVariable UUID id) {
-        Optional<User> user = service.findById(id);
-
-        if (user.isEmpty())
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<User> findById(@PathVariable UUID id) {
+        User user = service.findById(id);
 
         return ResponseEntity.ok().body(user);
-
     }
 
     @PostMapping
