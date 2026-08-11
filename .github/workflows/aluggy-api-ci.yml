@@ -1,11 +1,11 @@
 name: Aluggy API Continuous Integration
-
 on: push
-
 jobs:
   continuous-integration:
     runs-on: ubuntu-latest
-
+    env:
+      SPRING_PROFILES_ACTIVE: test
+      JWT_SECRET: test-secret-key-for-ci-only-not-used-in-production
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 25
