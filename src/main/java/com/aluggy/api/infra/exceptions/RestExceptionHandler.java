@@ -1,5 +1,6 @@
 package com.aluggy.api.infra.exceptions;
 
+import com.aluggy.api.exceptions.TokenGenerationException;
 import com.aluggy.api.exceptions.UserAlreadyExistsException;
 import com.aluggy.api.exceptions.UserNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -35,5 +36,13 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         problem.setTitle("Unauthorized");
         problem.setDetail(exception.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problem);
+    }
+
+    @ExceptionHandler(TokenGenerationException.class)
+    public ResponseEntity<ProblemDetail> handleTokenGeneration(TokenGenerationException exception) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
+        problem.setTitle("Internal server error");
+        problem.setDetail(exception.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problem);
     }
 }

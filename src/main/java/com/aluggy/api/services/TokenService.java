@@ -1,6 +1,7 @@
 package com.aluggy.api.services;
 
 import com.aluggy.api.entities.User;
+import com.aluggy.api.exceptions.TokenGenerationException;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
@@ -29,7 +30,7 @@ public class TokenService {
 
             return token;
         } catch (JWTCreationException e) {
-            throw new RuntimeException("Error while generating token", e);
+            throw new TokenGenerationException("Error while generating token");
         }
     }
 
