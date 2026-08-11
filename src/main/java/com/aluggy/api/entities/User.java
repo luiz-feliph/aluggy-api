@@ -2,6 +2,7 @@ package com.aluggy.api.entities;
 
 import com.aluggy.api.entities.enums.Role;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -41,6 +42,8 @@ public class User implements UserDetails {
     private String userName;
     private String fullName;
     private String emailAddress;
+
+    @JsonIgnore
     private String password;
     private String contactNumber;
     private String description;
