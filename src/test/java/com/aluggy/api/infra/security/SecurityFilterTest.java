@@ -130,22 +130,19 @@ class SecurityFilterTest {
     }
 
     @Test
-    void doFilterInternal_invalidToken_queriesDBWithEmptyStrings() throws ServletException, IOException {
+    void doFilterInternal_invalidToken_doesNotQueryDatabase() throws ServletException, IOException {
         when(request.getHeader("Authorization")).thenReturn("Bearer invalid-token");
         when(tokenService.validateToken("invalid-token")).thenReturn("");
-        when(userRepository.findByUserNameOrEmailAddress("", "")).thenReturn(Optional.empty());
 
         securityFilter.doFilterInternal(request, response, filterChain);
 
-        verify(userRepository).findByUserNameOrEmailAddress("", "");
-        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        verify(userRepository, never()).findByUserNameOrEmailAddress(anyString(), anyString());
     }
 
     @Test
     void doFilterInternal_invalidToken_noAuthentication() throws ServletException, IOException {
         when(request.getHeader("Authorization")).thenReturn("Bearer invalid-token");
         when(tokenService.validateToken("invalid-token")).thenReturn("");
-        when(userRepository.findByUserNameOrEmailAddress("", "")).thenReturn(Optional.empty());
 
         securityFilter.doFilterInternal(request, response, filterChain);
 
@@ -207,14 +204,15 @@ class SecurityFilterTest {
     }
 
     @Test
-    void doFilterInternal_tokenWithoutBearerPrefix_passedAsIs() throws ServletException, IOException {
+    void doFilterInternal_tokenWithoutBearerPrefix_noAuthentication() throws ServletException, IOException {
         when(request.getHeader("Authorization")).thenReturn("some-token-without-prefix");
         when(tokenService.validateToken("some-token-without-prefix")).thenReturn("");
-        when(userRepository.findByUserNameOrEmailAddress("", "")).thenReturn(Optional.empty());
 
         securityFilter.doFilterInternal(request, response, filterChain);
 
-        verify(tokenService).validateToken("some-token-without-prefix");
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        verify(userRepository, never()).findByUserNameOrEmailAddress(anyString(), anyString());
+        verify(filterChain).doFilter(request, response);
     }
 
     @Test

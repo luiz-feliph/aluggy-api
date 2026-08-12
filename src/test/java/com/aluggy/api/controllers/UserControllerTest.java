@@ -5,6 +5,7 @@ import com.aluggy.api.entities.enums.Role;
 import com.aluggy.api.exceptions.UserAlreadyExistsException;
 import com.aluggy.api.exceptions.UserNotFoundException;
 import com.aluggy.api.infra.security.SecurityConfigurations;
+import com.aluggy.api.infra.security.SecurityFilter;
 import com.aluggy.api.repositories.UserRepository;
 import com.aluggy.api.services.TokenService;
 import com.aluggy.api.services.UserService;
@@ -29,8 +30,8 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+@WebMvcTest(UserController.class)
+@Import({SecurityConfigurations.class, SecurityFilter.class})
 class UserControllerTest {
 
     @Autowired
@@ -54,8 +55,8 @@ class UserControllerTest {
         testUser = new User("johndoe", "John Doe", "john@email.com", "1234567890", "encoded-password", Role.USER);
         testUser.setId(testUserId);
 
-        when(tokenService.validateToken(anyString())).thenReturn("johndoe");
-        when(userRepository.findByUserNameOrEmailAddress("johndoe", "johndoe"))
+        lenient().when(tokenService.validateToken("valid-token")).thenReturn("johndoe");
+        lenient().when(userRepository.findByUserNameOrEmailAddress("johndoe", "johndoe"))
                 .thenReturn(Optional.of(testUser));
     }
 
