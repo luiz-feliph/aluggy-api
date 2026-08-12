@@ -47,7 +47,7 @@ class AuthenticationControllerTest {
     private UserRepository userRepository;
 
     private User createTestUser() {
-        User user = new User("johndoe", "John Doe", "john@email.com", "1234567890", "encoded-password", Role.USER);
+        User user = new User("johndoe", "John Doe", "john@email.com", "99123456789", "encoded-password", Role.USER);
         user.setId(UUID.randomUUID());
         return user;
     }
@@ -145,12 +145,12 @@ class AuthenticationControllerTest {
 
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userName\":\"johndoe\",\"fullName\":\"John Doe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"1234567890\",\"password\":\"password123\"}"))
+                        .content("{\"userName\":\"johndoe\",\"fullName\":\"John Doe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"99123456789\",\"password\":\"password123\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.userName").value("johndoe"))
                 .andExpect(jsonPath("$.fullName").value("John Doe"))
                 .andExpect(jsonPath("$.EmailAddress").value("john@email.com"))
-                .andExpect(jsonPath("$.contactNumber").value("1234567890"));
+                .andExpect(jsonPath("$.contactNumber").value("99123456789"));
     }
 
     @Test
@@ -162,7 +162,7 @@ class AuthenticationControllerTest {
 
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userName\":\"johndoe\",\"fullName\":\"John Doe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"1234567890\",\"password\":\"password123\"}"))
+                        .content("{\"userName\":\"johndoe\",\"fullName\":\"John Doe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"99123456789\",\"password\":\"password123\"}"))
                 .andExpect(status().isCreated());
 
         verify(userService).insert(argThat(user -> user.getRole() == Role.USER));
@@ -176,7 +176,7 @@ class AuthenticationControllerTest {
 
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userName\":\"johndoe\",\"fullName\":\"John Doe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"1234567890\",\"password\":\"password123\"}"))
+                        .content("{\"userName\":\"johndoe\",\"fullName\":\"John Doe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"99123456789\",\"password\":\"password123\"}"))
                 .andExpect(status().isConflict());
 
         verify(userService).insert(any(User.class));
@@ -186,7 +186,7 @@ class AuthenticationControllerTest {
     void register_missingFullName_returns400() throws Exception {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userName\":\"johndoe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"1234567890\",\"password\":\"password123\"}"))
+                        .content("{\"userName\":\"johndoe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"99123456789\",\"password\":\"password123\"}"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -202,7 +202,7 @@ class AuthenticationControllerTest {
     void register_emptyUserName_returns400() throws Exception {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userName\":\"\",\"fullName\":\"John Doe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"1234567890\",\"password\":\"password123\"}"))
+                        .content("{\"userName\":\"\",\"fullName\":\"John Doe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"99123456789\",\"password\":\"password123\"}"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -210,13 +210,13 @@ class AuthenticationControllerTest {
     void register_roleFieldIsIgnored_alwaysCreatesAsUSER() throws Exception {
         when(passwordEncoder.encode("password123")).thenReturn("encoded-password");
 
-        User savedUser = new User("adminuser", "Admin User", "admin@email.com", "1234567890", "encoded-password", Role.USER);
+        User savedUser = new User("adminuser", "Admin User", "admin@email.com", "99123456789", "encoded-password", Role.USER);
         savedUser.setId(UUID.randomUUID());
         when(userService.insert(any(User.class))).thenReturn(savedUser);
 
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userName\":\"adminuser\",\"fullName\":\"Admin User\",\"emailAddress\":\"admin@email.com\",\"contactNumber\":\"1234567890\",\"password\":\"password123\",\"role\":\"ADMIN\"}"))
+                        .content("{\"userName\":\"adminuser\",\"fullName\":\"Admin User\",\"emailAddress\":\"admin@email.com\",\"contactNumber\":\"99123456789\",\"password\":\"password123\",\"role\":\"ADMIN\"}"))
                 .andExpect(status().isCreated());
 
         verify(userService).insert(argThat(user -> user.getRole() == Role.USER));
@@ -242,7 +242,7 @@ class AuthenticationControllerTest {
     void register_emptyPassword_returns400() throws Exception {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userName\":\"johndoe\",\"fullName\":\"John Doe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"1234567890\",\"password\":\"\"}"))
+                        .content("{\"userName\":\"johndoe\",\"fullName\":\"John Doe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"99123456789\",\"password\":\"\"}"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -250,7 +250,7 @@ class AuthenticationControllerTest {
     void register_invalidEmailFormat_returns400() throws Exception {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userName\":\"johndoe\",\"fullName\":\"John Doe\",\"emailAddress\":\"not-an-email\",\"contactNumber\":\"1234567890\",\"password\":\"password123\"}"))
+                        .content("{\"userName\":\"johndoe\",\"fullName\":\"John Doe\",\"emailAddress\":\"not-an-email\",\"contactNumber\":\"99123456789\",\"password\":\"password123\"}"))
                 .andExpect(status().isBadRequest());
     }
 }
