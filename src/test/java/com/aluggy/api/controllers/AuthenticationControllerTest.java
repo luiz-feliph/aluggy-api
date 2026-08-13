@@ -152,7 +152,7 @@ class AuthenticationControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.userName").value("johndoe"))
                 .andExpect(jsonPath("$.fullName").value("John Doe"))
-                .andExpect(jsonPath("$.EmailAddress").value("john@email.com"))
+                .andExpect(jsonPath("$.emailAddress").value("john@email.com"))
                 .andExpect(jsonPath("$.contactNumber").value("99123456789"));
     }
 

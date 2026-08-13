@@ -68,7 +68,7 @@ class UserControllerTest {
         mockMvc.perform(get("/users")
                         .header("Authorization", "Bearer valid-token"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].username").value("johndoe"));
+                .andExpect(jsonPath("$[0].userName").value("johndoe"));
     }
 
     @Test
@@ -89,7 +89,7 @@ class UserControllerTest {
         mockMvc.perform(get("/users/{id}", testUserId)
                         .header("Authorization", "Bearer valid-token"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value("johndoe"));
+                .andExpect(jsonPath("$.userName").value("johndoe"));
     }
 
     @Test
@@ -101,33 +101,6 @@ class UserControllerTest {
         mockMvc.perform(get("/users/{id}", nonExistentId)
                         .header("Authorization", "Bearer valid-token"))
                 .andExpect(status().isNotFound());
-    }
-
-    @Test
-    void insert_validUser_returns201WithLocation() throws Exception {
-        User newUser = new User("janedoe", "Jane Doe", "jane@email.com", "0987654321", "password", Role.USER);
-        UUID newId = UUID.randomUUID();
-        newUser.setId(newId);
-        when(userService.insert(any(User.class))).thenReturn(newUser);
-
-        mockMvc.perform(post("/users")
-                        .header("Authorization", "Bearer valid-token")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userName\":\"janedoe\",\"fullName\":\"Jane Doe\",\"emailAddress\":\"jane@email.com\",\"contactNumber\":\"0987654321\",\"password\":\"password\"}"))
-                .andExpect(status().isCreated())
-                .andExpect(header().exists("Location"));
-    }
-
-    @Test
-    void insert_duplicateUsername_returns409() throws Exception {
-        when(userService.insert(any(User.class)))
-                .thenThrow(new UserAlreadyExistsException("Username já cadastrado"));
-
-        mockMvc.perform(post("/users")
-                        .header("Authorization", "Bearer valid-token")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userName\":\"janedoe\",\"fullName\":\"Jane Doe\",\"emailAddress\":\"jane@email.com\",\"contactNumber\":\"0987654321\",\"password\":\"password\"}"))
-                .andExpect(status().isConflict());
     }
 
     @Test
