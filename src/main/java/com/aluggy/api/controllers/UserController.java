@@ -1,5 +1,6 @@
 package com.aluggy.api.controllers;
 
+import com.aluggy.api.dto.UserResponseDTO;
 import com.aluggy.api.entities.User;
 import com.aluggy.api.services.UserService;
 import lombok.RequiredArgsConstructor;
@@ -21,16 +22,31 @@ public class UserController {
     private final UserService service;
 
     @GetMapping
-    public ResponseEntity<List<User>> findAll() {
-        List<User> users = service.findAll();
-        return ResponseEntity.ok().body(users);
+    public ResponseEntity<List<UserResponseDTO>> findAll() {
+        List<UserResponseDTO> response = service.findAll()
+                .stream()
+                .map(user -> new UserResponseDTO(
+                        user.getId(),
+                        user.getUsername(),
+                        user.getFullName(),
+                        user.getEmailAddress(),
+                        user.getContactNumber()
+                ))
+                .toList();
+        return ResponseEntity.ok().body(response);
     }
 
     @GetMapping(value = "/{id}")
-    public ResponseEntity<User> findById(@PathVariable UUID id) {
+    public ResponseEntity<UserResponseDTO> findById(@PathVariable UUID id) {
         User user = service.findById(id);
-
-        return ResponseEntity.ok().body(user);
+        UserResponseDTO response = new UserResponseDTO(
+                user.getId(),
+                user.getUsername(),
+                user.getFullName(),
+                user.getEmailAddress(),
+                user.getContactNumber()
+        );
+        return ResponseEntity.ok().body(response);
     }
 
     @DeleteMapping("/{id}")
