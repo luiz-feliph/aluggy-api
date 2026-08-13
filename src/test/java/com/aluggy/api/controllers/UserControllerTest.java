@@ -13,12 +13,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -27,6 +26,7 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -136,17 +136,28 @@ class UserControllerTest {
                         .header("Authorization", "Bearer valid-token"))
                 .andExpect(status().isNoContent());
 
-        verify(userService).delete(testUserId);
+        verify(userService).delete(eq(testUserId), any(User.class));
     }
 
     @Test
     void delete_nonExistentUser_returns404() throws Exception {
         doThrow(new UserNotFoundException("Usuário não encontrado"))
-                .when(userService).delete(testUserId);
+                .when(userService).delete(eq(testUserId), any(User.class));
 
         mockMvc.perform(delete("/users/{id}", testUserId)
                         .header("Authorization", "Bearer valid-token"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void delete_differentUser_returns403() throws Exception {
+        UUID otherId = UUID.randomUUID();
+        doThrow(new AccessDeniedException("Forbidden"))
+                .when(userService).delete(eq(otherId), any(User.class));
+
+        mockMvc.perform(delete("/users/{id}", otherId)
+                        .header("Authorization", "Bearer valid-token"))
+                .andExpect(status().isForbidden());
     }
 
     @Test

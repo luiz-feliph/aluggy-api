@@ -4,6 +4,7 @@ import com.aluggy.api.exceptions.TokenGenerationException;
 import com.aluggy.api.exceptions.UserAlreadyExistsException;
 import com.aluggy.api.exceptions.UserNotFoundException;
 import org.springframework.http.*;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -76,5 +77,13 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         problem.setTitle("Authentication failed");
         problem.setDetail("Invalid credentials");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problem);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ProblemDetail> handleAccessDenied(AccessDeniedException exception) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
+        problem.setTitle("Access denied");
+        problem.setDetail(exception.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problem);
     }
 }

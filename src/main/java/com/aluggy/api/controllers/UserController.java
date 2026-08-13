@@ -4,6 +4,7 @@ import com.aluggy.api.entities.User;
 import com.aluggy.api.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -32,19 +33,9 @@ public class UserController {
         return ResponseEntity.ok().body(user);
     }
 
-    @PostMapping
-    public ResponseEntity<User> insert(@RequestBody User newUser) {
-        newUser = service.insert(newUser);
-        URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
-                .path("/{id}")
-                .buildAndExpand(newUser.getId())
-                .toUri();
-        return ResponseEntity.created(uri).body(newUser);
-    }
-
-    @DeleteMapping(value = "/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        service.delete(id);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable UUID id, @AuthenticationPrincipal User authenticatedUser) {
+        service.delete(id, authenticatedUser);
         return ResponseEntity.noContent().build();
     }
 }

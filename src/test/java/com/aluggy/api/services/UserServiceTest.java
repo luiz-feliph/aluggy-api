@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.util.List;
 import java.util.Optional;
@@ -108,21 +109,48 @@ class UserServiceTest {
     }
 
     @Test
-    void delete_callsRepositoryDeleteById() {
-        UUID id = UUID.randomUUID();
+    void delete_owner_deletesSuccessfully() {
+        User authenticatedUser = createTestUser();
+        UUID id = authenticatedUser.getId();
         when(repository.existsById(id)).thenReturn(true);
 
-        service.delete(id);
+        service.delete(id, authenticatedUser);
 
         verify(repository).deleteById(id);
     }
 
     @Test
+    void delete_admin_deletesAnyUser() {
+        User admin = createTestUser();
+        admin.setRole(Role.ADMIN);
+
+        User target = createTestUser();
+        UUID targetId = target.getId();
+
+        when(repository.existsById(targetId)).thenReturn(true);
+
+        service.delete(targetId, admin);
+
+        verify(repository).deleteById(targetId);
+    }
+
+    @Test
+    void delete_nonOwnerUser_throwsAccessDeniedException() {
+        User authenticatedUser = createTestUser();
+        UUID otherId = UUID.randomUUID();
+        when(repository.existsById(otherId)).thenReturn(true);
+
+        assertThrows(AccessDeniedException.class, () -> service.delete(otherId, authenticatedUser));
+        verify(repository, never()).deleteById(any());
+    }
+
+    @Test
     void delete_nonExistentUser_throwsUserNotFoundException() {
+        User authenticatedUser = createTestUser();
         UUID id = UUID.randomUUID();
         when(repository.existsById(id)).thenReturn(false);
 
-        assertThrows(UserNotFoundException.class, () -> service.delete(id));
+        assertThrows(UserNotFoundException.class, () -> service.delete(id, authenticatedUser));
         verify(repository, never()).deleteById(any());
     }
 
