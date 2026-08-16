@@ -29,6 +29,6 @@ public record RegisterRequestDTO(
 
         @NotBlank(message = "Password is required")
         @Size(min = 8, max = 72, message = "Password must be between 8 and 72 characters")
-        @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)[\\\\x21-\\\\x7E]+$", message = "Password must contain at least one letter, one number and only ASCII characters")
+        @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)[\\x21-\\x7E]+$", message = "Password must contain at least one letter, one number and only ASCII characters")
         String password) {
 }
