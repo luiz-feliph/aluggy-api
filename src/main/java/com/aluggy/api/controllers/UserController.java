@@ -28,7 +28,6 @@ public class UserController {
                 .map(user -> new UserResponseDTO(
                         user.getId(),
                         user.getUsername(),
-                        user.getFullName(),
                         user.getEmailAddress(),
                         user.getContactNumber()
                 ))
@@ -42,7 +41,6 @@ public class UserController {
         UserResponseDTO response = new UserResponseDTO(
                 user.getId(),
                 user.getUsername(),
-                user.getFullName(),
                 user.getEmailAddress(),
                 user.getContactNumber()
         );

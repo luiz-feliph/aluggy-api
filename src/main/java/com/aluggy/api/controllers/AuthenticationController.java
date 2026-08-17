@@ -48,7 +48,7 @@ public class AuthenticationController {
 
         String encryptedPassword = passwordEncoder.encode(data.password());
 
-        User newUser = new User(data.userName(), data.fullName(), data.emailAddress(), data.contactNumber(), encryptedPassword, Role.USER);
+        User newUser = new User(data.userName(), data.emailAddress(), data.contactNumber(), encryptedPassword, Role.USER);
 
         newUser = service.insert(newUser);
 
@@ -61,7 +61,6 @@ public class AuthenticationController {
         UserResponseDTO response = new UserResponseDTO(
                 newUser.getId(),
                 newUser.getUsername(),
-                newUser.getFullName(),
                 newUser.getEmailAddress(),
                 newUser.getContactNumber()
         );

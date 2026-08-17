@@ -12,11 +12,6 @@ public record RegisterRequestDTO(
         @Pattern(regexp = "^[a-zA-Z0-9._-]+$", message = "Username must contain only letters, numbers, dots, underscores and hyphens")
         String userName,
 
-        @NotBlank(message = "Full name is required")
-        @Size(max = 100, message = "Full name must be a maximum of 100 characters")
-        @Pattern(regexp = "^[\\p{L}\\p{M}' .‐-]+$", message = "Full name must contain only letters, spaces, hyphens, apostrophes and dots")
-        String fullName,
-
         @NotBlank(message = "Email is required")
         @Email(message = "Invalid email format")
         @Pattern(regexp = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$", message = "Invalid email format")
