@@ -39,14 +39,9 @@ public class UserService {
     }
 
     public User insert(User user) {
-        if (existsByUserName(user.getUsername())) {
-            throw new UserAlreadyExistsException("User with username " + user.getUsername() + " already exists");
+        if (existsByUserName(user.getUsername()) || existsByEmailAddress(user.getEmailAddress())) {
+            throw new UserAlreadyExistsException("Username or email already in use");
         }
-
-        if (existsByEmailAddress(user.getEmailAddress())) {
-            throw new UserAlreadyExistsException("User with email " + user.getEmailAddress() + " already exists");
-        }
-
         return repository.save(user);
     }
 
