@@ -38,6 +38,33 @@ public class AuthenticationController {
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
 
+    @PostMapping("/register")
+    public ResponseEntity<UserResponseDTO> register(@RequestBody @Valid RegisterRequestDTO data) {
+
+        String encryptedPassword = passwordEncoder.encode(data.password());
+
+        User newUser = new User(data.userName(), data.emailAddress(), data.contactNumber(), encryptedPassword, Role.USER);
+
+        newUser = service.insert(newUser);
+
+        URI uri = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(newUser.getId())
+                .toUri();
+
+        UserResponseDTO response = new UserResponseDTO(
+                newUser.getId(),
+                newUser.getUsername(),
+                newUser.getEmailAddress(),
+                newUser.getContactNumber()
+        );
+
+        return ResponseEntity.created(uri).body(response);
+    }
+
+    /* TODO (login and logout): set secure(true) in production */
+
     @PostMapping("/login")
     public ResponseEntity<Void> login(@RequestBody @Valid LoginRequestDTO data, HttpServletResponse response) {
         var usernamePassword = new UsernamePasswordAuthenticationToken(data.login(), data.password());
@@ -62,28 +89,18 @@ public class AuthenticationController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<UserResponseDTO> register(@RequestBody @Valid RegisterRequestDTO data) {
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletResponse response) {
+        ResponseCookie expiredCookie = ResponseCookie.from("AUTH_TOKEN", "")
+                .path("/")
+                .httpOnly(true)
+                .secure(false)
+                .maxAge(0)
+                .sameSite("Strict")
+                .build();
 
-        String encryptedPassword = passwordEncoder.encode(data.password());
+        response.setHeader(HttpHeaders.SET_COOKIE, expiredCookie.toString());
 
-        User newUser = new User(data.userName(), data.emailAddress(), data.contactNumber(), encryptedPassword, Role.USER);
-
-        newUser = service.insert(newUser);
-
-        URI uri = ServletUriComponentsBuilder
-                .fromCurrentRequest()
-                .path("/{id}")
-                .buildAndExpand(newUser.getId())
-                .toUri();
-
-        UserResponseDTO response = new UserResponseDTO(
-                newUser.getId(),
-                newUser.getUsername(),
-                newUser.getEmailAddress(),
-                newUser.getContactNumber()
-        );
-
-        return ResponseEntity.created(uri).body(response);
+        return ResponseEntity.noContent().build();
     }
 }
