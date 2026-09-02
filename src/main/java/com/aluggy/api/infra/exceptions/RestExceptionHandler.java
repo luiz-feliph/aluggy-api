@@ -5,6 +5,7 @@ import com.aluggy.api.exceptions.UserAlreadyExistsException;
 import com.aluggy.api.exceptions.UserNotFoundException;
 import org.springframework.http.*;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -41,6 +42,14 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         problem.setTitle("Unauthorized");
         problem.setDetail(exception.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problem);
+    }
+
+    @ExceptionHandler(AuthenticationServiceException.class)
+    public ResponseEntity<ProblemDetail> handleAuthenticationService(AuthenticationServiceException exception) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
+        problem.setTitle("Authentication Service Error");
+        problem.setDetail("An unexpected error occurred during authentication");
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problem);
     }
 
     @ExceptionHandler(TokenGenerationException.class)
