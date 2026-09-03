@@ -37,7 +37,7 @@ public class AuthenticationController {
     private final TokenService tokenService;
 
     @PostMapping("/register")
-    public ResponseEntity<UserResponseDTO> register(@RequestBody @Valid RegisterRequestDTO data) {
+    public ResponseEntity<Void> register(@RequestBody @Valid RegisterRequestDTO data, HttpServletResponse response) {
 
         String encryptedPassword = passwordEncoder.encode(data.password());
 
@@ -45,20 +45,15 @@ public class AuthenticationController {
 
         newUser = service.insert(newUser);
 
+        setAuthCookie(response, newUser);
+
         URI uri = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
                 .buildAndExpand(newUser.getId())
                 .toUri();
 
-        UserResponseDTO response = new UserResponseDTO(
-                newUser.getId(),
-                newUser.getUsername(),
-                newUser.getEmailAddress(),
-                newUser.getContactNumber()
-        );
-
-        return ResponseEntity.created(uri).body(response);
+        return ResponseEntity.created(uri).build();
     }
 
     /* TODO (login and logout): set secure(true) in production */
@@ -72,17 +67,7 @@ public class AuthenticationController {
             throw new AuthenticationServiceException("Unexpected principal type");
         }
 
-        String token = tokenService.generateToken(user);
-
-        ResponseCookie cookie = ResponseCookie.from("AUTH_TOKEN", token)
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .sameSite("Strict")
-                .maxAge(Duration.ofHours(2))
-                .build();
-
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        setAuthCookie(response, user);
 
         return ResponseEntity.noContent().build();
     }
@@ -100,5 +85,19 @@ public class AuthenticationController {
         response.setHeader(HttpHeaders.SET_COOKIE, expiredCookie.toString());
 
         return ResponseEntity.noContent().build();
+    }
+
+    private void setAuthCookie(HttpServletResponse response, User user) {
+        String token = tokenService.generateToken(user);
+
+        ResponseCookie cookie = ResponseCookie.from("AUTH_TOKEN", token)
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .sameSite("Strict")
+                .maxAge(Duration.ofHours(2))
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 }
