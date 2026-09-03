@@ -16,11 +16,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
@@ -85,6 +83,13 @@ public class AuthenticationController {
         response.setHeader(HttpHeaders.SET_COOKIE, expiredCookie.toString());
 
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponseDTO> getMyData(@AuthenticationPrincipal User authenticatedUser) {
+        UserResponseDTO response = new UserResponseDTO(authenticatedUser);
+
+        return ResponseEntity.ok().body(response);
     }
 
     private void setAuthCookie(HttpServletResponse response, User user) {
