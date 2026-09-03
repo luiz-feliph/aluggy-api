@@ -21,6 +21,7 @@ public class UserController {
 
     private final UserService service;
 
+    /*
     @GetMapping
     public ResponseEntity<List<UserResponseDTO>> findAll() {
         List<UserResponseDTO> response = service.findAll()
@@ -46,6 +47,7 @@ public class UserController {
         );
         return ResponseEntity.ok().body(response);
     }
+    */
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id, @AuthenticationPrincipal User authenticatedUser) {
