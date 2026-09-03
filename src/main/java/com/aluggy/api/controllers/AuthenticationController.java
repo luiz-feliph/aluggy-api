@@ -1,7 +1,6 @@
 package com.aluggy.api.controllers;
 
 import com.aluggy.api.dto.LoginRequestDTO;
-import com.aluggy.api.dto.LoginResponseDTO;
 import com.aluggy.api.dto.RegisterRequestDTO;
 import com.aluggy.api.dto.UserResponseDTO;
 import com.aluggy.api.entities.User;
@@ -17,7 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
