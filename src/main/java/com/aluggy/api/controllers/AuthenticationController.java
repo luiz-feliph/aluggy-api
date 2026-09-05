@@ -10,6 +10,7 @@ import com.aluggy.api.services.UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +32,9 @@ public class AuthenticationController {
     private final AuthenticationManager authenticationManager;
     private final UserService service;
     private final TokenService tokenService;
+
+    @Value("${api.security.cookie.secure}")
+    private boolean cookieSecure;
 
     @PostMapping("/register")
     public ResponseEntity<Void> register(@RequestBody @Valid RegisterRequestDTO data, HttpServletResponse response) {
@@ -67,13 +71,7 @@ public class AuthenticationController {
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletResponse response) {
-        ResponseCookie expiredCookie = ResponseCookie.from("AUTH_TOKEN", "")
-                .path("/")
-                .httpOnly(true)
-                .secure(false)
-                .maxAge(0)
-                .sameSite("Strict")
-                .build();
+        ResponseCookie expiredCookie = baseCookie("", 0);
 
         response.setHeader(HttpHeaders.SET_COOKIE, expiredCookie.toString());
 
@@ -90,14 +88,18 @@ public class AuthenticationController {
     private void setAuthCookie(HttpServletResponse response, User user) {
         String token = tokenService.generateToken(user);
 
-        ResponseCookie cookie = ResponseCookie.from("AUTH_TOKEN", token)
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .sameSite("Strict")
-                .maxAge(Duration.ofHours(2))
-                .build();
+        ResponseCookie cookie = baseCookie(token, Duration.ofHours(2).getSeconds());
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
+    private ResponseCookie baseCookie(String value, long maxAge) {
+        return ResponseCookie.from("AUTH_TOKEN", value)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .path("/")
+                .sameSite("Strict")
+                .maxAge(maxAge)
+                .build();
     }
 }
