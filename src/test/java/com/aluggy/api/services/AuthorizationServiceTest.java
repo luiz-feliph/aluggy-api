@@ -74,7 +74,7 @@ class AuthorizationServiceTest {
         UsernameNotFoundException exception = assertThrows(UsernameNotFoundException.class,
                 () -> service.loadUserByUsername("nonexistent"));
 
-        assertEquals("Usuário não encontrado", exception.getMessage());
+        assertEquals("User not found", exception.getMessage());
     }
 
     @Test

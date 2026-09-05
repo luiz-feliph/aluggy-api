@@ -1,13 +1,10 @@
 package com.aluggy.api.infra.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -31,7 +28,6 @@ import java.util.List;
 public class SecurityConfigurations {
 
     private final SecurityFilter securityFilter;
-    private final ObjectMapper objectMapper;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) {
@@ -43,12 +39,12 @@ public class SecurityConfigurations {
                         headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
-                            ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
-                            problem.setTitle("Unauthorized");
-                            problem.setDetail("Authentication required");
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                            response.setContentType("application/json");
-                            response.getWriter().write(objectMapper.writeValueAsString(problem));
+                            response.setContentType("application/problem+json");
+                            response.setCharacterEncoding("UTF-8");
+                            response.getWriter().write("""
+                                        {"status":401,"title":"Unauthorized","detail":"Authentication required"}
+                                    """);
                         })
                 )
                 .authorizeHttpRequests(authorize -> authorize

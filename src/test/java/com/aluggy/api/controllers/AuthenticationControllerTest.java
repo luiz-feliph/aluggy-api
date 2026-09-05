@@ -16,6 +16,7 @@ import org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoCon
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -35,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(value = AuthenticationController.class, excludeAutoConfiguration = UserDetailsServiceAutoConfiguration.class)
 @Import({SecurityConfigurations.class, SecurityFilter.class})
 @AutoConfigureMockMvc
+@TestPropertySource(properties = "api.security.cookie.secure=false")
 class AuthenticationControllerTest {
 
     @Autowired
