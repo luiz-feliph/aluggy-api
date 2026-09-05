@@ -26,7 +26,7 @@ class AuthorizationServiceTest {
     private AuthorizationService service;
 
     private User createTestUser(String username, String email) {
-        User user = new User(username, "Test User", email, "1234567890", "encoded-password", Role.USER);
+        User user = new User(username, email, "1234567890", "encoded-password", Role.USER);
         user.setId(UUID.randomUUID());
         return user;
     }

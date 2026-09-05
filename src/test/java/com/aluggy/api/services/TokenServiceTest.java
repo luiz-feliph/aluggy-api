@@ -26,7 +26,7 @@ class TokenServiceTest {
     }
 
     private User createTestUser() {
-        User user = new User("johndoe", "John Doe", "john@email.com", "1234567890", "password123", Role.USER);
+        User user = new User("johndoe", "john@email.com", "1234567890", "password123", Role.USER);
         user.setId(UUID.randomUUID());
         return user;
     }
@@ -163,9 +163,9 @@ class TokenServiceTest {
 
     @Test
     void generateToken_differentUsersProduceDifferentTokens() {
-        User user1 = new User("johndoe", "John Doe", "john@email.com", "1234567890", "password123", Role.USER);
+        User user1 = new User("johndoe", "john@email.com", "1234567890", "password123", Role.USER);
         user1.setId(UUID.randomUUID());
-        User user2 = new User("janedoe", "Jane Doe", "jane@email.com", "0987654321", "password456", Role.USER);
+        User user2 = new User("janedoe", "jane@email.com", "0987654321", "password456", Role.USER);
         user2.setId(UUID.randomUUID());
 
         String token1 = tokenService.generateToken(user1);
@@ -179,5 +179,53 @@ class TokenServiceTest {
         assertDoesNotThrow(() -> tokenService.validateToken(""));
         assertDoesNotThrow(() -> tokenService.validateToken("garbage"));
         assertDoesNotThrow(() -> tokenService.validateToken(null));
+    }
+
+    @Test
+    void generateToken_setsSubjectToUsername() {
+        User user = createTestUser();
+        String token = tokenService.generateToken(user);
+
+        Algorithm algorithm = Algorithm.HMAC256(TEST_SECRET);
+        var decoded = JWT.require(algorithm).build().verify(token);
+
+        assertEquals(user.getUsername(), decoded.getSubject());
+    }
+
+    @Test
+    void generateToken_tokenExpiresInTwoHours() {
+        User user = createTestUser();
+        String token = tokenService.generateToken(user);
+
+        Algorithm algorithm = Algorithm.HMAC256(TEST_SECRET);
+        var decoded = JWT.require(algorithm).build().verify(token);
+
+        assertNotNull(decoded.getExpiresAt());
+        long diffSeconds = decoded.getExpiresAt().toInstant().getEpochSecond() - Instant.now().getEpochSecond();
+        assertTrue(diffSeconds > 7100 && diffSeconds <= 7200,
+                "Expiration should be approximately 2 hours from now, got " + diffSeconds + " seconds");
+    }
+
+    @Test
+    void validateToken_validToken_returnsExactUsername() {
+        User user = new User("specificuser", "specific@email.com", "1234567890", "pass123", Role.USER);
+        user.setId(UUID.randomUUID());
+        String token = tokenService.generateToken(user);
+
+        String result = tokenService.validateToken(token);
+
+        assertEquals("specificuser", result);
+    }
+
+    @Test
+    void generateToken_adminUser_tokenSubjectIsUsername() {
+        User admin = new User("admin", "admin@email.com", "1234567890", "adminpass", Role.ADMIN);
+        admin.setId(UUID.randomUUID());
+        String token = tokenService.generateToken(admin);
+
+        Algorithm algorithm = Algorithm.HMAC256(TEST_SECRET);
+        var decoded = JWT.require(algorithm).build().verify(token);
+
+        assertEquals("admin", decoded.getSubject());
     }
 }

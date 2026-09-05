@@ -3,15 +3,19 @@ package com.aluggy.api.controllers;
 import com.aluggy.api.entities.User;
 import com.aluggy.api.entities.enums.Role;
 import com.aluggy.api.exceptions.UserAlreadyExistsException;
+import com.aluggy.api.infra.security.SecurityConfigurations;
+import com.aluggy.api.infra.security.SecurityFilter;
 import com.aluggy.api.repositories.UserRepository;
 import com.aluggy.api.services.TokenService;
 import com.aluggy.api.services.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,15 +24,18 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(value = AuthenticationController.class, excludeAutoConfiguration = UserDetailsServiceAutoConfiguration.class)
-@AutoConfigureMockMvc(addFilters = false)
+@Import({SecurityConfigurations.class, SecurityFilter.class})
+@AutoConfigureMockMvc
 class AuthenticationControllerTest {
 
     @Autowired
@@ -50,13 +57,13 @@ class AuthenticationControllerTest {
     private UserRepository userRepository;
 
     private User createTestUser() {
-        User user = new User("johndoe", "John Doe", "john@email.com", "99123456789", "encoded-password", Role.USER);
+        User user = new User("johndoe", "john@email.com", "99123456789", "encoded-password", Role.USER);
         user.setId(UUID.randomUUID());
         return user;
     }
 
     @Test
-    void login_validCredentials_returns200WithToken() throws Exception {
+    void login_validCredentials_returns204WithAuthCookie() throws Exception {
         User user = createTestUser();
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities()));
@@ -65,12 +72,17 @@ class AuthenticationControllerTest {
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"login\":\"johndoe\",\"password\":\"password123\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").value("mock-jwt-token"));
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""))
+                .andExpect(cookie().exists("AUTH_TOKEN"))
+                .andExpect(cookie().httpOnly("AUTH_TOKEN", true))
+                .andExpect(cookie().path("AUTH_TOKEN", "/"))
+                .andExpect(cookie().maxAge("AUTH_TOKEN", 7200))
+                .andExpect(cookie().sameSite("AUTH_TOKEN", "Strict"));
     }
 
     @Test
-    void login_validEmailCredentials_returns200WithToken() throws Exception {
+    void login_validEmailCredentials_returns204WithCookie() throws Exception {
         User user = createTestUser();
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities()));
@@ -79,8 +91,8 @@ class AuthenticationControllerTest {
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"login\":\"john@email.com\",\"password\":\"password123\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").value("mock-jwt-token"));
+                .andExpect(status().isNoContent())
+                .andExpect(cookie().exists("AUTH_TOKEN"));
     }
 
     @Test
@@ -139,21 +151,25 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    void register_validData_returns201WithUserResponse() throws Exception {
+    void register_validData_returns201WithCookie() throws Exception {
         when(passwordEncoder.encode("password123")).thenReturn("encoded-password");
 
         User savedUser = createTestUser();
         savedUser.setPassword("encoded-password");
         when(userService.insert(any(User.class))).thenReturn(savedUser);
+        when(tokenService.generateToken(any(User.class))).thenReturn("mock-jwt-token");
 
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userName\":\"johndoe\",\"fullName\":\"John Doe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"99123456789\",\"password\":\"password123\"}"))
+                        .content("{\"userName\":\"johndoe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"99123456789\",\"password\":\"password123\"}"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.userName").value("johndoe"))
-                .andExpect(jsonPath("$.fullName").value("John Doe"))
-                .andExpect(jsonPath("$.emailAddress").value("john@email.com"))
-                .andExpect(jsonPath("$.contactNumber").value("99123456789"));
+                .andExpect(header().exists("Location"))
+                .andExpect(cookie().exists("AUTH_TOKEN"))
+                .andExpect(cookie().httpOnly("AUTH_TOKEN", true))
+                .andExpect(cookie().path("AUTH_TOKEN", "/"))
+                .andExpect(cookie().maxAge("AUTH_TOKEN", 7200))
+                .andExpect(cookie().sameSite("AUTH_TOKEN", "Strict"))
+                .andExpect(content().string(""));
     }
 
     @Test
@@ -162,10 +178,11 @@ class AuthenticationControllerTest {
 
         User savedUser = createTestUser();
         when(userService.insert(any(User.class))).thenReturn(savedUser);
+        when(tokenService.generateToken(any(User.class))).thenReturn("mock-jwt-token");
 
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userName\":\"johndoe\",\"fullName\":\"John Doe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"99123456789\",\"password\":\"password123\"}"))
+                        .content("{\"userName\":\"johndoe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"99123456789\",\"password\":\"password123\"}"))
                 .andExpect(status().isCreated());
 
         verify(userService).insert(argThat(user -> user.getRole() == Role.USER));
@@ -179,17 +196,17 @@ class AuthenticationControllerTest {
 
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userName\":\"johndoe\",\"fullName\":\"John Doe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"99123456789\",\"password\":\"password123\"}"))
+                        .content("{\"userName\":\"johndoe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"99123456789\",\"password\":\"password123\"}"))
                 .andExpect(status().isConflict());
 
         verify(userService).insert(any(User.class));
     }
 
     @Test
-    void register_missingFullName_returns400() throws Exception {
+    void register_missingUserName_returns400() throws Exception {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userName\":\"johndoe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"99123456789\",\"password\":\"password123\"}"))
+                        .content("{\"emailAddress\":\"john@email.com\",\"contactNumber\":\"99123456789\",\"password\":\"password123\"}"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -197,7 +214,7 @@ class AuthenticationControllerTest {
     void register_missingContactNumber_returns400() throws Exception {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userName\":\"johndoe\",\"fullName\":\"John Doe\",\"emailAddress\":\"john@email.com\",\"password\":\"password123\"}"))
+                        .content("{\"userName\":\"johndoe\",\"emailAddress\":\"john@email.com\",\"password\":\"password123\"}"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -205,7 +222,7 @@ class AuthenticationControllerTest {
     void register_emptyUserName_returns400() throws Exception {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userName\":\"\",\"fullName\":\"John Doe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"99123456789\",\"password\":\"password123\"}"))
+                        .content("{\"userName\":\"\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"99123456789\",\"password\":\"password123\"}"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -213,13 +230,14 @@ class AuthenticationControllerTest {
     void register_roleFieldIsIgnored_alwaysCreatesAsUSER() throws Exception {
         when(passwordEncoder.encode("password123")).thenReturn("encoded-password");
 
-        User savedUser = new User("adminuser", "Admin User", "admin@email.com", "99123456789", "encoded-password", Role.USER);
+        User savedUser = new User("adminuser", "admin@email.com", "99123456789", "encoded-password", Role.USER);
         savedUser.setId(UUID.randomUUID());
         when(userService.insert(any(User.class))).thenReturn(savedUser);
+        when(tokenService.generateToken(any(User.class))).thenReturn("mock-jwt-token");
 
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userName\":\"adminuser\",\"fullName\":\"Admin User\",\"emailAddress\":\"admin@email.com\",\"contactNumber\":\"99123456789\",\"password\":\"password123\",\"role\":\"ADMIN\"}"))
+                        .content("{\"userName\":\"adminuser\",\"emailAddress\":\"admin@email.com\",\"contactNumber\":\"99123456789\",\"password\":\"password123\",\"role\":\"ADMIN\"}"))
                 .andExpect(status().isCreated());
 
         verify(userService).insert(argThat(user -> user.getRole() == Role.USER));
@@ -245,7 +263,7 @@ class AuthenticationControllerTest {
     void register_emptyPassword_returns400() throws Exception {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userName\":\"johndoe\",\"fullName\":\"John Doe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"99123456789\",\"password\":\"\"}"))
+                        .content("{\"userName\":\"johndoe\",\"emailAddress\":\"john@email.com\",\"contactNumber\":\"99123456789\",\"password\":\"\"}"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -253,7 +271,59 @@ class AuthenticationControllerTest {
     void register_invalidEmailFormat_returns400() throws Exception {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userName\":\"johndoe\",\"fullName\":\"John Doe\",\"emailAddress\":\"not-an-email\",\"contactNumber\":\"99123456789\",\"password\":\"password123\"}"))
+                        .content("{\"userName\":\"johndoe\",\"emailAddress\":\"not-an-email\",\"contactNumber\":\"99123456789\",\"password\":\"password123\"}"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getMyData_authenticatedUser_returnsUserResponseDTO() throws Exception {
+        User user = createTestUser();
+        user.setFullName("John Doe");
+        user.setDescription("Test description");
+        when(tokenService.validateToken("valid-token")).thenReturn("johndoe");
+        when(userRepository.findByUserNameOrEmailAddress("johndoe", "johndoe"))
+                .thenReturn(Optional.of(user));
+
+        mockMvc.perform(get("/auth/me")
+                        .cookie(new Cookie("AUTH_TOKEN", "valid-token")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(user.getId().toString()))
+                .andExpect(jsonPath("$.userName").value("johndoe"))
+                .andExpect(jsonPath("$.fullName").value("John Doe"))
+                .andExpect(jsonPath("$.emailAddress").value("john@email.com"))
+                .andExpect(jsonPath("$.contactNumber").value("99123456789"))
+                .andExpect(jsonPath("$.description").value("Test description"))
+                .andExpect(jsonPath("$.role").value("USER"));
+    }
+
+    @Test
+    void getMyData_adminUser_returnsAdminRole() throws Exception {
+        User admin = new User("adminuser", "admin@email.com", "99123456789", "encoded-password", Role.ADMIN);
+        admin.setId(UUID.randomUUID());
+        when(tokenService.validateToken("admin-token")).thenReturn("adminuser");
+        when(userRepository.findByUserNameOrEmailAddress("adminuser", "adminuser"))
+                .thenReturn(Optional.of(admin));
+
+        mockMvc.perform(get("/auth/me")
+                        .cookie(new Cookie("AUTH_TOKEN", "admin-token")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.role").value("ADMIN"));
+    }
+
+    @Test
+    void getMyData_withoutAuthCookie_returns401() throws Exception {
+        mockMvc.perform(get("/auth/me"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void getMyData_unknownUserToken_returns401() throws Exception {
+        when(tokenService.validateToken("valid-token")).thenReturn("deleteduser");
+        when(userRepository.findByUserNameOrEmailAddress("deleteduser", "deleteduser"))
+                .thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/auth/me")
+                        .cookie(new Cookie("AUTH_TOKEN", "valid-token")))
+                .andExpect(status().isUnauthorized());
     }
 }

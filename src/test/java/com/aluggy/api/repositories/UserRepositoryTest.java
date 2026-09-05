@@ -29,7 +29,7 @@ class UserRepositoryTest {
     private TestEntityManager entityManager;
 
     private User createAndPersistUser(String userName, String emailAddress) {
-        User user = new User(userName, "Test User", emailAddress, "1234567890", "encoded-password", Role.USER);
+        User user = new User(userName, emailAddress, "1234567890", "encoded-password", Role.USER);
         return entityManager.persistAndFlush(user);
     }
 
@@ -182,7 +182,7 @@ class UserRepositoryTest {
 
     @Test
     void save_setsCreatedAt() {
-        User user = new User("johndoe", "John Doe", "john@email.com", "1234567890", "encoded-password", Role.USER);
+        User user = new User("johndoe", "john@email.com", "1234567890", "encoded-password", Role.USER);
 
         User saved = userRepository.save(user);
         entityManager.flush();
@@ -192,7 +192,7 @@ class UserRepositoryTest {
 
     @Test
     void save_persistsWithRole() {
-        User user = new User("johndoe", "John Doe", "john@email.com", "1234567890", "encoded-password", Role.ADMIN);
+        User user = new User("johndoe", "john@email.com", "1234567890", "encoded-password", Role.ADMIN);
 
         User saved = userRepository.save(user);
         entityManager.flush();
@@ -211,5 +211,51 @@ class UserRepositoryTest {
 
         assertTrue(result.isPresent());
         assertEquals("john1@email.com", result.get().getEmailAddress());
+    }
+
+    @Test
+    void findByUserNameOrEmailAddress_caseSensitiveUsername() {
+        createAndPersistUser("johndoe", "john@email.com");
+
+        Optional<User> result = userRepository.findByUserNameOrEmailAddress("JOHNDOE", "anything");
+
+        assertTrue(result.isEmpty(), "Username lookup should be case-sensitive");
+    }
+
+    @Test
+    void findByUserNameOrEmailAddress_caseSensitiveEmail() {
+        createAndPersistUser("johndoe", "john@email.com");
+
+        Optional<User> result = userRepository.findByUserNameOrEmailAddress("anything", "JOHN@email.com");
+
+        assertTrue(result.isEmpty(), "Email lookup should be case-sensitive");
+    }
+
+    @Test
+    void save_persistsFullName() {
+        User user = new User("johndoe", "johndoe@email.com", "12345678900", "encoded-password", Role.USER);
+        user.setFullName("John Doe");
+
+        User saved = userRepository.save(user);
+        entityManager.flush();
+        entityManager.clear();
+
+        Optional<User> found = userRepository.findById(saved.getId());
+        assertTrue(found.isPresent());
+        assertEquals("John Doe", found.get().getFullName());
+    }
+
+    @Test
+    void save_persistsDescription() {
+        User user = new User("johndoe", "johndoe@email.com", "12345678900", "encoded-password", Role.USER);
+        user.setDescription("A test user");
+
+        User saved = userRepository.save(user);
+        entityManager.flush();
+        entityManager.clear();
+
+        Optional<User> found = userRepository.findById(saved.getId());
+        assertTrue(found.isPresent());
+        assertEquals("A test user", found.get().getDescription());
     }
 }

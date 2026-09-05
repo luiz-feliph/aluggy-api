@@ -29,7 +29,7 @@ class UserServiceTest {
     private UserService service;
 
     private User createTestUser() {
-        User user = new User("johndoe", "John Doe", "john@email.com", "1234567890", "password", Role.USER);
+        User user = new User("johndoe", "john@email.com", "1234567890", "password", Role.USER);
         user.setId(UUID.randomUUID());
         return user;
     }
@@ -174,5 +174,42 @@ class UserServiceTest {
         assertFalse(service.existsByEmailAddress("other@email.com"));
         verify(repository).existsByEmailAddress("john@email.com");
         verify(repository).existsByEmailAddress("other@email.com");
+    }
+
+    @Test
+    void insert_newUserWithUniqueData_savesSuccessfully() {
+        User user = new User("newuser", "new@email.com", "12345678901", "password", Role.USER);
+        when(repository.existsByUserName("newuser")).thenReturn(false);
+        when(repository.existsByEmailAddress("new@email.com")).thenReturn(false);
+        when(repository.save(user)).thenReturn(user);
+
+        User result = service.insert(user);
+
+        assertEquals(user, result);
+        verify(repository).save(user);
+    }
+
+    @Test
+    void insert_newUser_checksBothUsernameAndEmail() {
+        User user = createTestUser();
+        when(repository.existsByUserName("johndoe")).thenReturn(false);
+        when(repository.existsByEmailAddress("john@email.com")).thenReturn(false);
+        when(repository.save(user)).thenReturn(user);
+
+        service.insert(user);
+
+        verify(repository).existsByUserName("johndoe");
+        verify(repository).existsByEmailAddress("john@email.com");
+    }
+
+    @Test
+    void delete_nonExistentUser_throwsUserNotFoundExceptionAndDoesNotDelete() {
+        User authenticatedUser = createTestUser();
+        UUID id = UUID.randomUUID();
+        when(repository.existsById(id)).thenReturn(false);
+
+        assertThrows(UserNotFoundException.class, () -> service.delete(id, authenticatedUser));
+        verify(repository, never()).deleteById(any());
+        verify(repository).existsById(id);
     }
 }
