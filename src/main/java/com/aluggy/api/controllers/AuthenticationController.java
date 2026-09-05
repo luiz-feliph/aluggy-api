@@ -17,7 +17,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -31,15 +30,11 @@ public class AuthenticationController {
 
     private final AuthenticationManager authenticationManager;
     private final UserService service;
-    private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
 
     @PostMapping("/register")
     public ResponseEntity<Void> register(@RequestBody @Valid RegisterRequestDTO data, HttpServletResponse response) {
-
-        String encryptedPassword = passwordEncoder.encode(data.password());
-
-        User newUser = new User(data.userName(), data.emailAddress(), data.contactNumber(), encryptedPassword, Role.USER);
+        User newUser = new User(data.userName(), data.emailAddress(), data.contactNumber(), data.password(), Role.USER);
 
         newUser = service.insert(newUser);
 

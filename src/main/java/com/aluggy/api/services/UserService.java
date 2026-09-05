@@ -5,8 +5,10 @@ import com.aluggy.api.entities.enums.Role;
 import com.aluggy.api.exceptions.UserAlreadyExistsException;
 import com.aluggy.api.exceptions.UserNotFoundException;
 import com.aluggy.api.repositories.UserRepository;
+import jdk.internal.net.http.common.Utils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,6 +20,7 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository repository;
+    private final PasswordEncoder passwordEncoder;
 
     public List<User> findAll() {
         return repository.findAll();
@@ -48,6 +51,9 @@ public class UserService {
         if (existsByUserName(user.getUsername()) || existsByEmailAddress(user.getEmailAddress())) {
             throw new UserAlreadyExistsException("Username or email already in use");
         }
+
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+
         return repository.save(user);
     }
 
