@@ -58,7 +58,7 @@ class UserControllerTest {
         testUser.setId(testUserId);
 
         lenient().when(tokenService.validateToken("valid-token")).thenReturn("johndoe");
-        lenient().when(userRepository.findByUserNameOrEmailAddress("johndoe", "johndoe"))
+        lenient().when(userRepository.findByUserNameOrEmailAddress("johndoe"))
                 .thenReturn(Optional.of(testUser));
     }
 
@@ -107,7 +107,7 @@ class UserControllerTest {
         adminUser.setId(UUID.randomUUID());
 
         lenient().when(tokenService.validateToken("admin-token")).thenReturn("adminuser");
-        lenient().when(userRepository.findByUserNameOrEmailAddress("adminuser", "adminuser"))
+        lenient().when(userRepository.findByUserNameOrEmailAddress("adminuser"))
                 .thenReturn(Optional.of(adminUser));
 
         mockMvc.perform(delete("/users/{id}", testUserId)
@@ -162,7 +162,7 @@ class UserControllerTest {
     @Test
     void tokenValidButUserDeleted_returns401() throws Exception {
         when(tokenService.validateToken(anyString())).thenReturn("deleteduser");
-        when(userRepository.findByUserNameOrEmailAddress("deleteduser", "deleteduser"))
+        when(userRepository.findByUserNameOrEmailAddress("deleteduser"))
                 .thenReturn(Optional.empty());
 
         mockMvc.perform(delete("/users/{id}", UUID.randomUUID())

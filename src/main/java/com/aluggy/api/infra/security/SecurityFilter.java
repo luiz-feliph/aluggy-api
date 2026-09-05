@@ -32,7 +32,7 @@ public class SecurityFilter extends OncePerRequestFilter {
             var subject = tokenService.validateToken(token);
 
             if (!subject.isEmpty()) {
-                Optional<User> userOptional = userRepository.findByUserNameOrEmailAddress(subject, subject);
+                Optional<User> userOptional = userRepository.findByUserNameOrEmailAddress(subject);
 
                 if (userOptional.isPresent()) {
                     User user = userOptional.get();

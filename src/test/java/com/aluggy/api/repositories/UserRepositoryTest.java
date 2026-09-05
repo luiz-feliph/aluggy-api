@@ -37,7 +37,7 @@ class UserRepositoryTest {
     void findByUserNameOrEmailAddress_foundByUsername() {
         User user = createAndPersistUser("johndoe", "john@email.com");
 
-        Optional<User> result = userRepository.findByUserNameOrEmailAddress("johndoe", "anything");
+        Optional<User> result = userRepository.findByUserNameOrEmailAddress("johndoe");
 
         assertTrue(result.isPresent());
         assertEquals("johndoe", result.get().getUsername());
@@ -47,7 +47,7 @@ class UserRepositoryTest {
     void findByUserNameOrEmailAddress_foundByEmail() {
         User user = createAndPersistUser("johndoe", "john@email.com");
 
-        Optional<User> result = userRepository.findByUserNameOrEmailAddress("anything", "john@email.com");
+        Optional<User> result = userRepository.findByUserNameOrEmailAddress("john@email.com");
 
         assertTrue(result.isPresent());
         assertEquals("johndoe", result.get().getUsername());
@@ -57,7 +57,7 @@ class UserRepositoryTest {
     void findByUserNameOrEmailAddress_foundByBothParams() {
         User user = createAndPersistUser("johndoe", "john@email.com");
 
-        Optional<User> result = userRepository.findByUserNameOrEmailAddress("johndoe", "john@email.com");
+        Optional<User> result = userRepository.findByUserNameOrEmailAddress("john@email.com");
 
         assertTrue(result.isPresent());
         assertEquals("johndoe", result.get().getUsername());
@@ -65,7 +65,7 @@ class UserRepositoryTest {
 
     @Test
     void findByUserNameOrEmailAddress_notFound() {
-        Optional<User> result = userRepository.findByUserNameOrEmailAddress("nonexistent", "nonexistent@email.com");
+        Optional<User> result = userRepository.findByUserNameOrEmailAddress("nonexistent@email.com");
 
         assertTrue(result.isEmpty());
     }
@@ -123,7 +123,7 @@ class UserRepositoryTest {
                 .executeUpdate();
         entityManager.clear();
 
-        Optional<User> result = userRepository.findByUserNameOrEmailAddress("johndoe", "john@email.com");
+        Optional<User> result = userRepository.findByUserNameOrEmailAddress("johndoe");
 
         assertTrue(result.isEmpty(), "Soft-deleted user should not be returned by findByUserNameOrEmailAddress");
     }
@@ -207,28 +207,28 @@ class UserRepositoryTest {
     void findByUserNameOrEmailAddress_duplicateUsername_returnsFirst() {
         User user1 = createAndPersistUser("johndoe", "john1@email.com");
 
-        Optional<User> result = userRepository.findByUserNameOrEmailAddress("johndoe", "anything");
+        Optional<User> result = userRepository.findByUserNameOrEmailAddress("johndoe");
 
         assertTrue(result.isPresent());
         assertEquals("john1@email.com", result.get().getEmailAddress());
     }
 
     @Test
-    void findByUserNameOrEmailAddress_caseSensitiveUsername() {
+    void findByUserNameOrEmailAddress_caseInsensitiveUsername() {
         createAndPersistUser("johndoe", "john@email.com");
 
-        Optional<User> result = userRepository.findByUserNameOrEmailAddress("JOHNDOE", "anything");
+        Optional<User> result = userRepository.findByUserNameOrEmailAddress("JOHNDOE");
 
-        assertTrue(result.isEmpty(), "Username lookup should be case-sensitive");
+        assertTrue(result.isPresent(), "Username lookup should be case-insensitive");
     }
 
     @Test
-    void findByUserNameOrEmailAddress_caseSensitiveEmail() {
+    void findByUserNameOrEmailAddress_caseInsensitiveEmail() {
         createAndPersistUser("johndoe", "john@email.com");
 
-        Optional<User> result = userRepository.findByUserNameOrEmailAddress("anything", "JOHN@email.com");
+        Optional<User> result = userRepository.findByUserNameOrEmailAddress("JOHN@email.com");
 
-        assertTrue(result.isEmpty(), "Email lookup should be case-sensitive");
+        assertTrue(result.isPresent(), "Email lookup should be case-insensitive");
     }
 
     @Test

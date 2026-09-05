@@ -34,32 +34,32 @@ class AuthorizationServiceTest {
     @Test
     void loadUserByUsername_foundByUsername() {
         User user = createTestUser("johndoe", "john@email.com");
-        when(repository.findByUserNameOrEmailAddress("johndoe", "johndoe"))
+        when(repository.findByUserNameOrEmailAddress("johndoe"))
                 .thenReturn(Optional.of(user));
 
         var result = service.loadUserByUsername("johndoe");
 
         assertNotNull(result);
         assertEquals("johndoe", result.getUsername());
-        verify(repository).findByUserNameOrEmailAddress("johndoe", "johndoe");
+        verify(repository).findByUserNameOrEmailAddress("johndoe");
     }
 
     @Test
     void loadUserByUsername_foundByEmail() {
         User user = createTestUser("johndoe", "john@email.com");
-        when(repository.findByUserNameOrEmailAddress("john@email.com", "john@email.com"))
+        when(repository.findByUserNameOrEmailAddress("john@email.com"))
                 .thenReturn(Optional.of(user));
 
         var result = service.loadUserByUsername("john@email.com");
 
         assertNotNull(result);
         assertEquals("johndoe", result.getUsername());
-        verify(repository).findByUserNameOrEmailAddress("john@email.com", "john@email.com");
+        verify(repository).findByUserNameOrEmailAddress("john@email.com");
     }
 
     @Test
     void loadUserByUsername_notFound_throwsUsernameNotFoundException() {
-        when(repository.findByUserNameOrEmailAddress("nonexistent", "nonexistent"))
+        when(repository.findByUserNameOrEmailAddress("nonexistent"))
                 .thenReturn(Optional.empty());
 
         assertThrows(UsernameNotFoundException.class,
@@ -68,7 +68,7 @@ class AuthorizationServiceTest {
 
     @Test
     void loadUserByUsername_notFound_throwsWithCorrectMessage() {
-        when(repository.findByUserNameOrEmailAddress("nonexistent", "nonexistent"))
+        when(repository.findByUserNameOrEmailAddress("nonexistent"))
                 .thenReturn(Optional.empty());
 
         UsernameNotFoundException exception = assertThrows(UsernameNotFoundException.class,
@@ -79,20 +79,20 @@ class AuthorizationServiceTest {
 
     @Test
     void loadUserByUsername_delegatesToRepositoryWithSameValueForBothParams() {
-        when(repository.findByUserNameOrEmailAddress("admin", "admin"))
+        when(repository.findByUserNameOrEmailAddress("admin"))
                 .thenReturn(Optional.empty());
 
         assertThrows(UsernameNotFoundException.class,
                 () -> service.loadUserByUsername("admin"));
 
-        verify(repository).findByUserNameOrEmailAddress("admin", "admin");
+        verify(repository).findByUserNameOrEmailAddress("admin");
     }
 
     @Test
     void loadUserByUsername_returnsUserDetails() {
         User user = createTestUser("admin", "admin@email.com");
         user.setRole(Role.ADMIN);
-        when(repository.findByUserNameOrEmailAddress("admin", "admin"))
+        when(repository.findByUserNameOrEmailAddress("admin"))
                 .thenReturn(Optional.of(user));
 
         var result = service.loadUserByUsername("admin");

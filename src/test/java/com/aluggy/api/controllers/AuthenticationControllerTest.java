@@ -281,7 +281,7 @@ class AuthenticationControllerTest {
         user.setFullName("John Doe");
         user.setDescription("Test description");
         when(tokenService.validateToken("valid-token")).thenReturn("johndoe");
-        when(userRepository.findByUserNameOrEmailAddress("johndoe", "johndoe"))
+        when(userRepository.findByUserNameOrEmailAddress("johndoe"))
                 .thenReturn(Optional.of(user));
 
         mockMvc.perform(get("/auth/me")
@@ -301,7 +301,7 @@ class AuthenticationControllerTest {
         User admin = new User("adminuser", "admin@email.com", "99123456789", "encoded-password", Role.ADMIN);
         admin.setId(UUID.randomUUID());
         when(tokenService.validateToken("admin-token")).thenReturn("adminuser");
-        when(userRepository.findByUserNameOrEmailAddress("adminuser", "adminuser"))
+        when(userRepository.findByUserNameOrEmailAddress("adminuser"))
                 .thenReturn(Optional.of(admin));
 
         mockMvc.perform(get("/auth/me")
@@ -319,7 +319,7 @@ class AuthenticationControllerTest {
     @Test
     void getMyData_unknownUserToken_returns401() throws Exception {
         when(tokenService.validateToken("valid-token")).thenReturn("deleteduser");
-        when(userRepository.findByUserNameOrEmailAddress("deleteduser", "deleteduser"))
+        when(userRepository.findByUserNameOrEmailAddress("deleteduser"))
                 .thenReturn(Optional.empty());
 
         mockMvc.perform(get("/auth/me")

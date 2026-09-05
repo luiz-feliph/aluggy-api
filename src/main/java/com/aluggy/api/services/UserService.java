@@ -39,6 +39,12 @@ public class UserService {
     }
 
     public User insert(User user) {
+        String normalizedUsername = user.getUsername().toLowerCase();
+        String normalizedEmail = user.getEmailAddress().toLowerCase();
+
+        user.setUserName(normalizedUsername);
+        user.setEmailAddress(normalizedEmail);
+
         if (existsByUserName(user.getUsername()) || existsByEmailAddress(user.getEmailAddress())) {
             throw new UserAlreadyExistsException("Username or email already in use");
         }

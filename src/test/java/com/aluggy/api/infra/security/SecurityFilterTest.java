@@ -64,7 +64,7 @@ class SecurityFilterTest {
         User user = createTestUser();
         when(request.getCookies()).thenReturn(new Cookie[]{new Cookie("AUTH_TOKEN", "valid-token")});
         when(tokenService.validateToken("valid-token")).thenReturn("johndoe");
-        when(userRepository.findByUserNameOrEmailAddress("johndoe", "johndoe"))
+        when(userRepository.findByUserNameOrEmailAddress("johndoe"))
                 .thenReturn(Optional.of(user));
 
         securityFilter.doFilterInternal(request, response, filterChain);
@@ -79,7 +79,7 @@ class SecurityFilterTest {
         User user = createTestUser();
         when(request.getCookies()).thenReturn(new Cookie[]{new Cookie("AUTH_TOKEN", "valid-token")});
         when(tokenService.validateToken("valid-token")).thenReturn("johndoe");
-        when(userRepository.findByUserNameOrEmailAddress("johndoe", "johndoe"))
+        when(userRepository.findByUserNameOrEmailAddress("johndoe"))
                 .thenReturn(Optional.of(user));
 
         securityFilter.doFilterInternal(request, response, filterChain);
@@ -95,7 +95,7 @@ class SecurityFilterTest {
         adminUser.setId(UUID.randomUUID());
         when(request.getCookies()).thenReturn(new Cookie[]{new Cookie("AUTH_TOKEN", "admin-token")});
         when(tokenService.validateToken("admin-token")).thenReturn("admin");
-        when(userRepository.findByUserNameOrEmailAddress("admin", "admin"))
+        when(userRepository.findByUserNameOrEmailAddress("admin"))
                 .thenReturn(Optional.of(adminUser));
 
         securityFilter.doFilterInternal(request, response, filterChain);
@@ -110,7 +110,7 @@ class SecurityFilterTest {
     void doFilterInternal_validCookie_deletedUser_noAuthentication() throws ServletException, IOException {
         when(request.getCookies()).thenReturn(new Cookie[]{new Cookie("AUTH_TOKEN", "valid-token")});
         when(tokenService.validateToken("valid-token")).thenReturn("deleteduser");
-        when(userRepository.findByUserNameOrEmailAddress("deleteduser", "deleteduser"))
+        when(userRepository.findByUserNameOrEmailAddress("deleteduser"))
                 .thenReturn(Optional.empty());
 
         securityFilter.doFilterInternal(request, response, filterChain);
@@ -123,7 +123,7 @@ class SecurityFilterTest {
     void doFilterInternal_validCookie_deletedUser_continuesWithoutCrashing() throws ServletException, IOException {
         when(request.getCookies()).thenReturn(new Cookie[]{new Cookie("AUTH_TOKEN", "valid-token")});
         when(tokenService.validateToken("valid-token")).thenReturn("deleteduser");
-        when(userRepository.findByUserNameOrEmailAddress("deleteduser", "deleteduser"))
+        when(userRepository.findByUserNameOrEmailAddress("deleteduser"))
                 .thenReturn(Optional.empty());
 
         assertDoesNotThrow(() -> securityFilter.doFilterInternal(request, response, filterChain));
@@ -137,7 +137,7 @@ class SecurityFilterTest {
 
         securityFilter.doFilterInternal(request, response, filterChain);
 
-        verify(userRepository, never()).findByUserNameOrEmailAddress(anyString(), anyString());
+        verify(userRepository, never()).findByUserNameOrEmailAddress(anyString());
     }
 
     @Test
@@ -169,7 +169,7 @@ class SecurityFilterTest {
         securityFilter.doFilterInternal(request, response, filterChain);
 
         verify(tokenService, never()).validateToken(anyString());
-        verify(userRepository, never()).findByUserNameOrEmailAddress(anyString(), anyString());
+        verify(userRepository, never()).findByUserNameOrEmailAddress(anyString());
     }
 
     @Test
@@ -189,7 +189,7 @@ class SecurityFilterTest {
         Cookie authCookie = new Cookie("AUTH_TOKEN", "valid-token");
         when(request.getCookies()).thenReturn(new Cookie[]{otherCookie, authCookie});
         when(tokenService.validateToken("valid-token")).thenReturn("johndoe");
-        when(userRepository.findByUserNameOrEmailAddress("johndoe", "johndoe"))
+        when(userRepository.findByUserNameOrEmailAddress("johndoe"))
                 .thenReturn(Optional.of(user));
 
         securityFilter.doFilterInternal(request, response, filterChain);
@@ -231,7 +231,7 @@ class SecurityFilterTest {
     }
 
     @Test
-    void doFilterInternal_filterDoesNotThrowOnValidateTokenFailure() throws ServletException, IOException {
+    void doFilterInternal_filterDoesNotThrowOnValidateTokenFailure() {
         when(request.getCookies()).thenReturn(new Cookie[]{new Cookie("AUTH_TOKEN", "bad-token")});
         when(tokenService.validateToken("bad-token")).thenReturn("");
 
