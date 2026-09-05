@@ -40,7 +40,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ProblemDetail> handleAuthentication(AuthenticationException exception) {
         ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
         problem.setTitle("Unauthorized");
-        problem.setDetail(exception.getMessage());
+        problem.setDetail("Authentication required");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problem);
     }
 
