@@ -100,7 +100,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ProblemDetail> handleAccessDenied(AccessDeniedException exception) {
         ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
         problem.setTitle("Access denied");
-        problem.setDetail(exception.getMessage());
+        problem.setDetail("You do not have permission to perform this action");
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problem);
     }
 }
