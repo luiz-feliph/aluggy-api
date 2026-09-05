@@ -5,14 +5,12 @@ import com.aluggy.api.entities.enums.Role;
 import com.aluggy.api.exceptions.UserAlreadyExistsException;
 import com.aluggy.api.exceptions.UserNotFoundException;
 import com.aluggy.api.repositories.UserRepository;
-import jdk.internal.net.http.common.Utils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
