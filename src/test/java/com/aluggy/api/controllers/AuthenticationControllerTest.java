@@ -21,7 +21,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Optional;
@@ -46,9 +45,6 @@ class AuthenticationControllerTest {
 
     @MockitoBean
     private UserService userService;
-
-    @MockitoBean
-    private PasswordEncoder passwordEncoder;
 
     @MockitoBean
     private TokenService tokenService;
@@ -152,8 +148,6 @@ class AuthenticationControllerTest {
 
     @Test
     void register_validData_returns201WithCookie() throws Exception {
-        when(passwordEncoder.encode("password123")).thenReturn("encoded-password");
-
         User savedUser = createTestUser();
         savedUser.setPassword("encoded-password");
         when(userService.insert(any(User.class))).thenReturn(savedUser);
@@ -174,8 +168,6 @@ class AuthenticationControllerTest {
 
     @Test
     void register_validData_createsUserWithRoleUSER() throws Exception {
-        when(passwordEncoder.encode("password123")).thenReturn("encoded-password");
-
         User savedUser = createTestUser();
         when(userService.insert(any(User.class))).thenReturn(savedUser);
         when(tokenService.generateToken(any(User.class))).thenReturn("mock-jwt-token");
@@ -190,7 +182,6 @@ class AuthenticationControllerTest {
 
     @Test
     void register_duplicateUser_returns409() throws Exception {
-        when(passwordEncoder.encode("password123")).thenReturn("encoded-password");
         when(userService.insert(any(User.class)))
                 .thenThrow(new UserAlreadyExistsException("User already exists"));
 
@@ -228,8 +219,6 @@ class AuthenticationControllerTest {
 
     @Test
     void register_roleFieldIsIgnored_alwaysCreatesAsUSER() throws Exception {
-        when(passwordEncoder.encode("password123")).thenReturn("encoded-password");
-
         User savedUser = new User("adminuser", "admin@email.com", "99123456789", "encoded-password", Role.USER);
         savedUser.setId(UUID.randomUUID());
         when(userService.insert(any(User.class))).thenReturn(savedUser);

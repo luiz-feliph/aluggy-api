@@ -53,8 +53,6 @@ public class AuthenticationController {
         return ResponseEntity.created(uri).build();
     }
 
-    /* TODO (login and logout): set secure(true) in production */
-
     @PostMapping("/login")
     public ResponseEntity<Void> login(@RequestBody @Valid LoginRequestDTO data, HttpServletResponse response) {
         var usernamePassword = new UsernamePasswordAuthenticationToken(data.login(), data.password());

@@ -11,6 +11,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +25,9 @@ class UserServiceTest {
 
     @Mock
     private UserRepository repository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UserService service;
@@ -80,13 +84,16 @@ class UserServiceTest {
     void insert_delegatesToRepository() {
         User user = createTestUser();
         User savedUser = createTestUser();
+        savedUser.setPassword("encoded-password");
         savedUser.setId(UUID.randomUUID());
+        when(passwordEncoder.encode("password")).thenReturn("encoded-password");
         when(repository.save(user)).thenReturn(savedUser);
 
         User result = service.insert(user);
 
         assertEquals(savedUser, result);
-        verify(repository).save(user);
+        verify(passwordEncoder).encode("password");
+        verify(repository).save(argThat(u -> "encoded-password".equals(u.getPassword())));
     }
 
     @Test
@@ -181,12 +188,15 @@ class UserServiceTest {
         User user = new User("newuser", "new@email.com", "12345678901", "password", Role.USER);
         when(repository.existsByUserName("newuser")).thenReturn(false);
         when(repository.existsByEmailAddress("new@email.com")).thenReturn(false);
+        when(passwordEncoder.encode("password")).thenReturn("encoded-password");
         when(repository.save(user)).thenReturn(user);
 
         User result = service.insert(user);
 
         assertEquals(user, result);
-        verify(repository).save(user);
+        assertEquals("encoded-password", result.getPassword());
+        verify(passwordEncoder).encode("password");
+        verify(repository).save(argThat(u -> "encoded-password".equals(u.getPassword())));
     }
 
     @Test
@@ -194,12 +204,14 @@ class UserServiceTest {
         User user = createTestUser();
         when(repository.existsByUserName("johndoe")).thenReturn(false);
         when(repository.existsByEmailAddress("john@email.com")).thenReturn(false);
+        when(passwordEncoder.encode("password")).thenReturn("encoded-password");
         when(repository.save(user)).thenReturn(user);
 
         service.insert(user);
 
         verify(repository).existsByUserName("johndoe");
         verify(repository).existsByEmailAddress("john@email.com");
+        verify(passwordEncoder).encode("password");
     }
 
     @Test
