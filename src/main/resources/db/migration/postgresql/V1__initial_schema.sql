@@ -1,24 +1,24 @@
 CREATE TYPE role AS ENUM ('USER', 'ADMIN');
 
-CREATE TABLE users
-(
-    id             UUID PRIMARY KEY,
-    role           role                NOT NULL DEFAULT 'USER',
-    user_name      VARCHAR(50) UNIQUE  NOT NULL,
-    full_name      VARCHAR(255)        NOT NULL,
-    email_address  VARCHAR(255) UNIQUE NOT NULL,
-    password       VARCHAR(255)        NOT NULL,
-    contact_number VARCHAR(15)         NOT NULL,
-    description    VARCHAR(255),
-    registered_at  TIMESTAMP WITH TIME ZONE         NOT NULL DEFAULT NOW(),
-    deleted_at     TIMESTAMP WITH TIME ZONE                  DEFAULT NULL
-);
-
 CREATE TABLE profile_photos
 (
-    id      UUID PRIMARY KEY,
-    user_id UUID UNIQUE NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    url     TEXT        NOT NULL
+    id  UUID PRIMARY KEY,
+    url TEXT NOT NULL
+);
+
+CREATE TABLE users
+(
+    id               UUID PRIMARY KEY,
+    role             role                     NOT NULL DEFAULT 'USER',
+    user_name        VARCHAR(50) UNIQUE       NOT NULL,
+    full_name        VARCHAR(255)             NOT NULL,
+    email_address    VARCHAR(255) UNIQUE      NOT NULL,
+    password         VARCHAR(255)             NOT NULL,
+    contact_number   VARCHAR(15)              NOT NULL,
+    description      VARCHAR(255),
+    registered_at    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    deleted_at       TIMESTAMP WITH TIME ZONE          DEFAULT NULL,
+    profile_photo_id UUID UNIQUE              REFERENCES profile_photos (id) ON DELETE SET NULL
 );
 
 CREATE TABLE property_types
@@ -73,13 +73,13 @@ CREATE TABLE addresses
 CREATE TABLE posts
 (
     id           UUID PRIMARY KEY,
-    user_id      UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    property_id  UUID        NOT NULL REFERENCES properties (id) ON DELETE CASCADE,
-    is_active    boolean     NOT NULL,
+    user_id      UUID                     NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    property_id  UUID                     NOT NULL REFERENCES properties (id) ON DELETE CASCADE,
+    is_active    boolean                  NOT NULL,
     published_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at   TIMESTAMP WITH TIME ZONE          DEFAULT NULL,
     deleted_at   TIMESTAMP WITH TIME ZONE          DEFAULT NULL,
-    description  TEXT
+    description TEXT
 );
 
 CREATE TABLE post_images

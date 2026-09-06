@@ -1,0 +1,3 @@
+-- H2 does not support functional indexes (LOWER()).
+-- Case-insensitive uniqueness is enforced at the application layer | (UserService.insert normalization + LOWER() in JPQL query).
+-- This migration is a no-op for the test environment.
